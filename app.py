@@ -1053,7 +1053,7 @@ else:
 st.markdown(
     f"""
     <div class="footer">
-        Eğitim amaçlı hazırlanmıştır. Senaryolar gerçek poliçe veya fiyatlama tavsiyesi değildir. · Sürüm {APP_VERSION}
+        Çağrı Hamurcu tarafından eğitim amaçlı hazırlanmıştır. Senaryolar gerçek poliçe veya fiyatlama tavsiyesi değildir. · Sürüm {APP_VERSION}
     </div>
     """,
     unsafe_allow_html=True,
