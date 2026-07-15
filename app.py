@@ -739,7 +739,7 @@ def render_role_summary():
     st.markdown(
         f"""
         <div class="footer">
-            Eğitim amaçlı hazırlanmıştır. · Sürüm {APP_VERSION}
+            Çağrı Hamurcu tarafıdan eğitim amaçlı hazırlanmıştır. · Sürüm {APP_VERSION}
         </div>
         """,
         unsafe_allow_html=True,
