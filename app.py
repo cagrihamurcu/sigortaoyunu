@@ -6,7 +6,7 @@ from typing import Dict, List
 import streamlit as st
 
 
-APP_VERSION = "4.0.0"
+APP_VERSION = "5.0.0"
 
 st.set_page_config(
     page_title="Sigorta Ekosistemi",
@@ -70,6 +70,81 @@ st.markdown(
         padding: 1.25rem 1.35rem;
         margin: .8rem 0 1rem 0;
         border-left: 5px solid #22d3ee;
+    }
+
+    .scene-grid {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 1.15rem;
+        align-items: center;
+    }
+
+    .scene-icon {
+        min-height: 142px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 5.2rem;
+        border-radius: 22px;
+        background:
+            radial-gradient(circle at 35% 25%, rgba(255,255,255,.16), transparent 35%),
+            linear-gradient(145deg, rgba(14,165,233,.22), rgba(109,40,217,.28));
+        border: 1px solid rgba(125,211,252,.22);
+        box-shadow: inset 0 0 30px rgba(255,255,255,.04);
+    }
+
+    .scene-title {
+        font-size: 1.8rem;
+        font-weight: 850;
+        margin: .35rem 0 .45rem 0;
+    }
+
+    .risk-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: .6rem;
+        margin-top: .85rem;
+    }
+
+    .risk-pill {
+        padding: .65rem .75rem;
+        border-radius: 14px;
+        background: rgba(30,41,59,.72);
+        border: 1px solid rgba(148,163,184,.13);
+        color: #cbd5e1;
+        font-size: .8rem;
+    }
+
+    .summary-card {
+        padding: 1.25rem 1.35rem;
+        border-radius: 22px;
+        background: linear-gradient(145deg, rgba(15,23,42,.86), rgba(30,41,59,.72));
+        border: 1px solid rgba(167,139,250,.24);
+        box-shadow: 0 14px 34px rgba(0,0,0,.20);
+        margin: 1rem 0;
+    }
+
+    .learning-item {
+        padding: .75rem .85rem;
+        border-radius: 14px;
+        background: rgba(34,211,238,.08);
+        border: 1px solid rgba(34,211,238,.16);
+        margin: .45rem 0;
+        color: #e2e8f0;
+    }
+
+    @media (max-width: 760px) {
+        .scene-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .scene-icon {
+            min-height: 110px;
+        }
+
+        .risk-strip {
+            grid-template-columns: 1fr;
+        }
     }
 
     .result-card {
@@ -162,6 +237,11 @@ ROLES = [
         "responsibility": "Doğru bilgi vermek, poliçeyi incelemek, primi ödemek ve hasarı zamanında bildirmek.",
         "function": "Prim ödeyerek ortak risk havuzuna katılır ve büyük mali kayıpları sigorta sistemine aktarır.",
         "badge": "Bilinçli Sigortalı",
+        "summary": [
+            "Prim kadar teminat kapsamının da önemli olduğunu öğrendin.",
+            "Her risk ve her müşteri için aynı poliçenin uygun olmayacağını gördün.",
+            "Siber ve yeni teknoloji risklerinde özel teminatların gerekebileceğini fark ettin.",
+        ],
     },
     {
         "name": "Sigorta Şirketi",
@@ -171,6 +251,11 @@ ROLES = [
         "responsibility": "Poliçe şartlarını açık belirlemek, yeterli fon bulundurmak ve geçerli hasarları zamanında ödemek.",
         "function": "Çok sayıda kişinin primini ortak havuzda toplar ve zarar yaşayan sigortalılara ödeme yapar.",
         "badge": "Adil Sigortacı",
+        "summary": [
+            "Risk kabulü ile müşteri erişimi arasında denge kurulması gerektiğini öğrendin.",
+            "Hasar kararlarının inceleme, kanıt ve şeffaf iletişime dayanması gerektiğini gördün.",
+            "Büyük ve yoğunlaşmış risklerde reasüransın şirketi koruduğunu fark ettin.",
+        ],
     },
     {
         "name": "Aktüer",
@@ -180,6 +265,11 @@ ROLES = [
         "responsibility": "Gerçekçi varsayımlar kullanmak, riskleri adil değerlendirmek ve gelecekteki yükümlülükleri dikkate almak.",
         "function": "Risk ile prim arasında bilimsel ve sayısal bağlantı kurar.",
         "badge": "Risk Dedektifi",
+        "summary": [
+            "Primlerin risk düzeyine göre değişmesi gerektiğini öğrendin.",
+            "Geçmiş hasarlar, güvenlik önlemleri ve çevresel değişimlerin fiyatlamayı etkilediğini gördün.",
+            "Yetersiz primin sigorta sisteminin ödeme kapasitesini zayıflatacağını fark ettin.",
+        ],
     },
     {
         "name": "Reasürans Şirketi",
@@ -189,6 +279,11 @@ ROLES = [
         "responsibility": "Devraldığı riskleri dikkatle değerlendirmek ve büyük hasarlarda sözleşmedeki payını karşılamak.",
         "function": "Büyük ve katastrofik riskleri daha geniş piyasalara dağıtarak sigorta şirketlerini korur.",
         "badge": "Reasürans Stratejisti",
+        "summary": [
+            "Büyük risklerin tek bir kurum üzerinde bırakılmaması gerektiğini öğrendin.",
+            "Deprem ve siber risklerde birikimli zararların önemini gördün.",
+            "Reasüransın ulusal riskleri uluslararası piyasalara dağıttığını fark ettin.",
+        ],
     },
 ]
 
@@ -492,6 +587,10 @@ if "selected_option" not in st.session_state:
     st.session_state.selected_option = None
 if "role_intro_seen" not in st.session_state:
     st.session_state.role_intro_seen = False
+if "show_role_summary" not in st.session_state:
+    st.session_state.show_role_summary = False
+if "completed_role_index" not in st.session_state:
+    st.session_state.completed_role_index = None
 if "badges" not in st.session_state:
     st.session_state.badges = []
 if "role_scores" not in st.session_state:
@@ -514,6 +613,8 @@ def reset_game():
     st.session_state.answered = False
     st.session_state.selected_option = None
     st.session_state.role_intro_seen = False
+    st.session_state.show_role_summary = False
+    st.session_state.completed_role_index = None
     st.session_state.badges = []
     st.session_state.role_scores = {
         role["name"]: {"earned": 0, "possible": 0, "decisions": 0}
@@ -536,6 +637,114 @@ def score_cards():
                 """,
                 unsafe_allow_html=True,
             )
+
+
+
+CATEGORY_VISUALS = {
+    "🌧️ Afet Riski": ("🌊", "Yüksek", "Konut / işyeri", "Teminat kapsamı"),
+    "🚗 Klasik Risk": ("🚘", "Orta", "Araç / üçüncü kişi", "Uygun koruma"),
+    "🏪 Ticari Risk": ("🏪", "Orta-Yüksek", "İşletme", "Birden fazla risk"),
+    "🏥 Sağlık Riski": ("🩺", "Kişiye göre", "Sağlık gideri", "Prim-teminat dengesi"),
+    "💻 Siber Risk": ("🧑‍💻", "Hızla değişen", "Veri / faaliyet", "Güvenlik önlemleri"),
+    "🔋 Yeni Nesil Risk": ("⚡", "Gelişen", "Teknoloji", "Özel teminat"),
+    "🔥 Klasik Risk": ("🏭", "Yüksek", "Fiziksel varlık", "Önleme"),
+    "🔍 Hasar Süreci": ("🔎", "Belirsiz", "Hasar dosyası", "Kanıta dayalı karar"),
+    "🌍 Katastrofik Risk": ("🌐", "Çok yüksek", "Çok sayıda poliçe", "Risk paylaşımı"),
+    "🤝 Müşteri İlişkisi": ("🤝", "İtibar", "Müşteri güveni", "Şeffaf iletişim"),
+    "🚚 Küresel Risk": ("🚢", "Bağlantılı", "Tedarik zinciri", "Bağımlılık analizi"),
+    "🏠 Klasik Risk": ("🏠", "Değişken", "Bina", "Risk özellikleri"),
+    "📉 Finansal Risk": ("📉", "Yüksek", "Ödeme gücü", "Yeterli prim"),
+    "🌡️ Yeni Nesil Risk": ("🌡️", "Artan", "İklim etkisi", "Güncel veri"),
+    "🔥 Büyük Risk": ("🏭", "Çok yüksek", "Tek varlık", "Paylaşım oranı"),
+    "⚡ Küresel Risk": ("⚡", "Çok yüksek", "Enerji tesisi", "Uluslararası paylaşım"),
+    "📄 Bilgi Riski": ("📋", "Belirsiz", "Risk verisi", "Eksiksiz bilgi"),
+    "☁️ Siber Risk": ("☁️", "Birikimli", "Ortak altyapı", "Yoğunlaşma"),
+    "🧩 Küresel Siber Risk": ("🌍", "Sınır ötesi", "Çok sayıda işletme", "Küresel paylaşım"),
+}
+
+
+def scenario_visual(category: str):
+    return CATEGORY_VISUALS.get(
+        category,
+        ("🛡️", "Değişken", "Sigortalı değer", "Risk değerlendirmesi"),
+    )
+
+
+def role_percent(role_name: str) -> int:
+    data = st.session_state.role_scores.get(
+        role_name, {"earned": 0, "possible": 0, "decisions": 0}
+    )
+    percent = round(max(0, data["earned"]) / max(1, data["possible"]) * 100)
+    return max(0, min(100, percent))
+
+
+def render_role_summary():
+    completed_index = st.session_state.completed_role_index
+    if completed_index is None or not (0 <= completed_index < len(ROLES)):
+        st.session_state.show_role_summary = False
+        st.session_state.completed_role_index = None
+        st.rerun()
+
+    completed_role = ROLES[completed_index]
+    percent = role_percent(completed_role["name"])
+
+    st.markdown(
+        f"""
+        <div class="hero">
+            <h1>{completed_role['icon']} {completed_role['name']} Tamamlandı</h1>
+            <p>Bu roldeki kararlarını tamamladın. Bir sonraki role geçmeden önce öğrendiklerini özetleyelim.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    left, right = st.columns([.75, 1.25])
+    with left:
+        st.markdown(
+            f"""
+            <div class="summary-card" style="text-align:center;">
+                <div style="font-size:4.5rem;">🏅</div>
+                <div class="role-title">{completed_role['badge']}</div>
+                <div class="muted">Rol performansı</div>
+                <div style="font-size:2.2rem;font-weight:850;margin:.35rem 0;">{percent}/100</div>
+                <div>{performance_label(percent)}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with right:
+        st.markdown("### Bu rolde ne öğrendin?")
+        for item in completed_role["summary"]:
+            st.markdown(
+                f'<div class="learning-item">✅ {item}</div>',
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("### Sistemdeki yerin")
+        st.info(completed_role["function"])
+
+    next_text = (
+        "Genel Değerlendirmeye Geç"
+        if completed_index == len(ROLES) - 1
+        else f"Sonraki Role Geç: {ROLES[completed_index + 1]['name']}"
+    )
+    if st.button(next_text):
+        st.session_state.show_role_summary = False
+        st.session_state.completed_role_index = None
+        st.session_state.role_index = completed_index + 1
+        st.session_state.scenario_index = 0
+        st.session_state.role_intro_seen = False
+        st.rerun()
+
+    st.markdown(
+        f"""
+        <div class="footer">
+            Eğitim amaçlı hazırlanmıştır. · Sürüm {APP_VERSION}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.stop()
 
 
 def performance_label(percent: int) -> str:
@@ -714,6 +923,10 @@ except (TypeError, ValueError):
 if st.session_state.role_index < 0:
     st.session_state.role_index = 0
 
+# Bir rol yeni tamamlandıysa önce bölüm sonu öğrenme özetini göster.
+if st.session_state.show_role_summary:
+    render_role_summary()
+
 # Oyun tamamlandıysa, yeni bir rol okumaya çalışmadan değerlendirme ekranını göster.
 if st.session_state.role_index >= len(ROLES):
     render_final_assessment()
@@ -758,12 +971,24 @@ if not st.session_state.role_intro_seen:
 
 scenario = role_scenarios[st.session_state.scenario_index]
 
+scene_icon, risk_level, affected_area, focus_point = scenario_visual(scenario.category)
+
 st.markdown(
     f"""
     <div class="scenario-card">
-        <span class="tag">{scenario.category}</span>
-        <h2 style="margin:.4rem 0 .6rem 0;">{scenario.title}</h2>
-        <p style="font-size:1.05rem;color:#e2e8f0;">{scenario.story}</p>
+        <div class="scene-grid">
+            <div class="scene-icon">{scene_icon}</div>
+            <div>
+                <span class="tag">{scenario.category}</span>
+                <div class="scene-title">{scenario.title}</div>
+                <p style="font-size:1.08rem;color:#e2e8f0;margin-bottom:.4rem;">{scenario.story}</p>
+                <div class="risk-strip">
+                    <div class="risk-pill"><b>Risk düzeyi</b><br>{risk_level}</div>
+                    <div class="risk-pill"><b>Etkilenen alan</b><br>{affected_area}</div>
+                    <div class="risk-pill"><b>Karar odağı</b><br>{focus_point}</div>
+                </div>
+            </div>
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -818,12 +1043,9 @@ else:
             if role["badge"] not in st.session_state.badges:
                 st.session_state.badges.append(role["badge"])
 
-            st.session_state.role_index += 1
+            st.session_state.completed_role_index = st.session_state.role_index
+            st.session_state.show_role_summary = True
             st.session_state.scenario_index = 0
-            st.session_state.role_intro_seen = False
-
-            if st.session_state.role_index >= len(ROLES):
-                st.session_state.role_index = len(ROLES)
 
         st.rerun()
 
