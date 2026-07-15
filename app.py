@@ -6,7 +6,7 @@ from typing import Dict, List
 import streamlit as st
 
 
-APP_VERSION = "3.0.0"
+APP_VERSION = "4.0.0"
 
 st.set_page_config(
     page_title="Sigorta Ekosistemi",
@@ -494,6 +494,11 @@ if "role_intro_seen" not in st.session_state:
     st.session_state.role_intro_seen = False
 if "badges" not in st.session_state:
     st.session_state.badges = []
+if "role_scores" not in st.session_state:
+    st.session_state.role_scores = {
+        role["name"]: {"earned": 0, "possible": 0, "decisions": 0}
+        for role in ROLES
+    }
 
 
 def clamp(value: int) -> int:
@@ -510,6 +515,10 @@ def reset_game():
     st.session_state.selected_option = None
     st.session_state.role_intro_seen = False
     st.session_state.badges = []
+    st.session_state.role_scores = {
+        role["name"]: {"earned": 0, "possible": 0, "decisions": 0}
+        for role in ROLES
+    }
     st.rerun()
 
 
@@ -527,6 +536,133 @@ def score_cards():
                 """,
                 unsafe_allow_html=True,
             )
+
+
+def performance_label(percent: int) -> str:
+    if percent >= 85:
+        return "Çok iyi"
+    if percent >= 70:
+        return "İyi"
+    if percent >= 55:
+        return "Gelişiyor"
+    return "Tekrar gözden geçirilmeli"
+
+
+def score_comment(name: str, value: int) -> str:
+    comments = {
+        "Risk Bilgisi": {
+            "high": "Riskleri, teminatları ve risk paylaşımını başarılı biçimde değerlendirdin.",
+            "mid": "Temel riskleri doğru değerlendirdin; bazı yeni ve birikimli risklerde daha dikkatli olabilirsin.",
+            "low": "Prim, teminat, risk yoğunlaşması ve yeni nesil riskler arasındaki bağlantıları yeniden gözden geçir.",
+        },
+        "Adil Karar": {
+            "high": "Müşteri ile şirketin çıkarları arasında dengeli ve hakkaniyetli kararlar verdin.",
+            "mid": "Genellikle dengeli kararlar verdin; bazı durumlarda tarafların haklarını birlikte düşünmelisin.",
+            "low": "Karar verirken yalnızca bir tarafın çıkarına değil, müşteri ve sistem dengesine birlikte odaklan.",
+        },
+        "Sistem Güvenliği": {
+            "high": "Sigorta sisteminin ödeme gücünü ve devamlılığını güçlü biçimde gözetirdin.",
+            "mid": "Sistemin sürdürülebilirliğini çoğu kararda korudun; büyük risklerde daha temkinli olabilirsin.",
+            "low": "Yetersiz fiyatlama, yoğunlaşma ve büyük hasarların sistem üzerindeki etkisini daha fazla dikkate al.",
+        },
+        "Müşteri Güveni": {
+            "high": "Şeffaflık, zamanında ödeme ve güvenilir iletişim konularında başarılıydın.",
+            "mid": "Çoğu kararda güveni korudun; iletişim ve şeffaflığı her durumda sürdürmelisin.",
+            "low": "Açık bilgilendirme, adil inceleme ve zamanında ödeme güvenin temelidir.",
+        },
+    }
+    level = "high" if value >= 80 else "mid" if value >= 60 else "low"
+    return comments[name][level]
+
+
+def render_final_assessment():
+    st.progress(1.0)
+    st.markdown(
+        """
+        <div class="hero">
+            <h1>🏆 Sigorta Ekosistemi Tamamlandı</h1>
+            <p>Dört farklı rolü tamamladın. Şimdi kararlarının sana nasıl bir sigortacılık profili kazandırdığına bakalım.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    score_cards()
+    average_score = round(sum(st.session_state.scores.values()) / len(st.session_state.scores))
+
+    if average_score >= 80:
+        title = "Sigorta Ekosistemi Ustası"
+    elif average_score >= 65:
+        title = "Güçlü Risk Yöneticisi"
+    else:
+        title = "Sigorta Kaşifi"
+
+    st.success(f"**Genel unvanın:** {title}  ·  **Genel başarın:** {average_score}/100")
+
+    strongest = max(st.session_state.scores, key=st.session_state.scores.get)
+    weakest = min(st.session_state.scores, key=st.session_state.scores.get)
+
+    left, right = st.columns(2)
+    with left:
+        st.markdown("### 🌟 En güçlü alanın")
+        st.info(
+            f"**{strongest}: {st.session_state.scores[strongest]}/100**\n\n"
+            f"{score_comment(strongest, st.session_state.scores[strongest])}"
+        )
+    with right:
+        st.markdown("### 🎯 Gelişim alanın")
+        st.warning(
+            f"**{weakest}: {st.session_state.scores[weakest]}/100**\n\n"
+            f"{score_comment(weakest, st.session_state.scores[weakest])}"
+        )
+
+    st.markdown("### Rol bazlı performansın")
+    for role_item in ROLES:
+        data = st.session_state.role_scores.get(
+            role_item["name"], {"earned": 0, "possible": 0, "decisions": 0}
+        )
+        percent = round(max(0, data["earned"]) / max(1, data["possible"]) * 100)
+        percent = max(0, min(100, percent))
+        st.markdown(
+            f"**{role_item['icon']} {role_item['name']} — "
+            f"{performance_label(percent)} ({percent}/100)**"
+        )
+        st.progress(percent / 100)
+
+    st.markdown("### Bu oyunda öğrendiklerin")
+    st.markdown(
+        """
+        - En düşük prim her zaman en uygun poliçe değildir; teminat kapsamı da önemlidir.
+        - Sigorta şirketi riskleri ortak havuzda toplar ve geçerli hasarları karşılar.
+        - Aktüer, risk düzeyi ile prim arasında bilimsel bir bağlantı kurar.
+        - Reasürans, büyük ve birikimli riskleri daha geniş piyasalara dağıtır.
+        - Siber, iklim ve teknoloji riskleri sigortacılığın güncel çalışma alanlarıdır.
+        - Güven, şeffaflık ve adil hasar yönetimi sistemin sürdürülebilirliği için gereklidir.
+        """
+    )
+
+    st.markdown("### Kazandığın rozetler")
+    for badge in st.session_state.badges:
+        st.write(f"🏅 {badge}")
+
+    st.info(
+        "Sigorta sistemi; müşteriler, sigorta şirketleri, aktüerler ve reasürans şirketlerinin "
+        "birbirini tamamlayan görevleri sayesinde çalışır. Risk değerlendirilir, primlerle ortak "
+        "bir fon oluşturulur ve büyük zararlar taraflar arasında paylaşılır."
+    )
+
+    if st.button("Oyunu Yeniden Başlat"):
+        reset_game()
+
+    st.markdown(
+        f"""
+        <div class="footer">
+            Eğitim amaçlı hazırlanmıştır. Senaryolar gerçek poliçe veya fiyatlama tavsiyesi değildir. · Sürüm {APP_VERSION}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.stop()
 
 
 if not st.session_state.started:
@@ -578,53 +714,9 @@ except (TypeError, ValueError):
 if st.session_state.role_index < 0:
     st.session_state.role_index = 0
 
-# Oyun tamamlandıysa, yeni bir rol okumaya çalışmadan sonuç ekranını göster.
+# Oyun tamamlandıysa, yeni bir rol okumaya çalışmadan değerlendirme ekranını göster.
 if st.session_state.role_index >= len(ROLES):
-    st.progress(1.0)
-    st.markdown(
-        """
-        <div class="hero">
-            <h1>🏆 Sigorta Ekosistemi Tamamlandı</h1>
-            <p>Dört farklı rolü tamamladın ve sigorta sisteminin nasıl birlikte çalıştığını gördün.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    score_cards()
-    average_score = round(sum(st.session_state.scores.values()) / 4)
-
-    if average_score >= 80:
-        title = "Sigorta Ekosistemi Ustası"
-    elif average_score >= 65:
-        title = "Güçlü Risk Yöneticisi"
-    else:
-        title = "Sigorta Kaşifi"
-
-    st.success(f"Genel unvanın: **{title}**")
-
-    st.markdown("### Kazandığın rozetler")
-    for badge in st.session_state.badges:
-        st.write(f"🏅 {badge}")
-
-    st.info(
-        "Sigorta sistemi; müşteriler, sigorta şirketleri, aktüerler ve reasürans şirketlerinin "
-        "birbirini tamamlayan görevleri sayesinde çalışır. Risk değerlendirilir, primlerle ortak "
-        "bir fon oluşturulur ve büyük zararlar taraflar arasında paylaşılır."
-    )
-
-    if st.button("Oyunu Yeniden Başlat"):
-        reset_game()
-
-    st.markdown(
-        f"""
-        <div class="footer">
-            Eğitim amaçlı hazırlanmıştır. Senaryolar gerçek poliçe veya fiyatlama tavsiyesi değildir. · Sürüm {APP_VERSION}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.stop()
+    render_final_assessment()
 
 role = ROLES[st.session_state.role_index]
 role_scenarios = SCENARIOS[role["name"]]
@@ -686,6 +778,17 @@ if not st.session_state.answered:
                 st.session_state.scores[score_name] = clamp(
                     st.session_state.scores[score_name] + delta
                 )
+
+            positive_total = sum(max(0, delta) for delta in option.scores.values())
+            scenario_best = max(
+                sum(max(0, delta) for delta in candidate.scores.values())
+                for candidate in scenario.options
+            )
+            role_record = st.session_state.role_scores[role["name"]]
+            role_record["earned"] += positive_total
+            role_record["possible"] += max(1, scenario_best)
+            role_record["decisions"] += 1
+
             st.session_state.answered = True
             st.rerun()
 else:
@@ -723,43 +826,6 @@ else:
                 st.session_state.role_index = len(ROLES)
 
         st.rerun()
-
-
-if st.session_state.role_index >= len(ROLES):
-    st.markdown(
-        """
-        <div class="hero">
-            <h1>🏆 Sigorta Ekosistemi Tamamlandı</h1>
-            <p>Dört farklı rolü tamamladın ve sigorta sisteminin nasıl birlikte çalıştığını gördün.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    score_cards()
-    average_score = round(sum(st.session_state.scores.values()) / 4)
-
-    if average_score >= 80:
-        title = "Sigorta Ekosistemi Ustası"
-    elif average_score >= 65:
-        title = "Güçlü Risk Yöneticisi"
-    else:
-        title = "Sigorta Kaşifi"
-
-    st.success(f"Genel unvanın: **{title}**")
-
-    st.markdown("### Kazandığın rozetler")
-    for badge in st.session_state.badges:
-        st.write(f"🏅 {badge}")
-
-    st.info(
-        "Sigorta sistemi; müşteriler, sigorta şirketleri, aktüerler ve reasürans şirketlerinin "
-        "birbirini tamamlayan görevleri sayesinde çalışır. Risk değerlendirilir, primlerle ortak "
-        "bir fon oluşturulur ve büyük zararlar taraflar arasında paylaşılır."
-    )
-
-    if st.button("Oyunu Yeniden Başlat"):
-        reset_game()
 
 
 st.markdown(
