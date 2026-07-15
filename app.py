@@ -3,198 +3,131 @@ import random
 from dataclasses import dataclass
 from typing import Dict, List
 
-import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 
 
-# ------------------------------------------------------------
-# PAGE CONFIG
-# ------------------------------------------------------------
 st.set_page_config(
-    page_title="Sigorta Ekosistemi | Yönetim Simülasyonu",
+    page_title="Sigorta Ekosistemi",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 
-# ------------------------------------------------------------
-# VISUAL DESIGN
-# ------------------------------------------------------------
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-    html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
-    }
-
     .stApp {
         background:
-            radial-gradient(circle at 15% 10%, rgba(34,211,238,.10), transparent 28%),
-            radial-gradient(circle at 85% 15%, rgba(139,92,246,.13), transparent 30%),
-            linear-gradient(145deg, #07111f 0%, #0b1728 55%, #111827 100%);
+            radial-gradient(circle at 10% 10%, rgba(56,189,248,.12), transparent 28%),
+            radial-gradient(circle at 90% 10%, rgba(168,85,247,.12), transparent 28%),
+            linear-gradient(145deg, #07111f, #0f172a 55%, #111827);
         color: #f8fafc;
     }
 
-    [data-testid="stSidebar"] {
-        background: rgba(7, 17, 31, .96);
-        border-right: 1px solid rgba(148,163,184,.14);
+    .main .block-container {
+        max-width: 1120px;
+        padding-top: 1.6rem;
+        padding-bottom: 3rem;
     }
 
     .hero {
         padding: 1.35rem 1.5rem;
         border-radius: 24px;
         background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(124,58,237,.18));
-        border: 1px solid rgba(125,211,252,.22);
+        border: 1px solid rgba(125,211,252,.25);
         box-shadow: 0 18px 50px rgba(0,0,0,.22);
         margin-bottom: 1rem;
     }
 
     .hero h1 {
         margin: 0;
-        font-size: clamp(2rem, 4vw, 3.5rem);
-        line-height: 1.02;
-        letter-spacing: -0.045em;
-        background: linear-gradient(90deg, #ffffff, #67e8f9, #c4b5fd);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 2.4rem;
+        line-height: 1.05;
     }
 
     .hero p {
-        margin: .75rem 0 0 0;
+        margin: .7rem 0 0 0;
         color: #cbd5e1;
-        font-size: 1.03rem;
-        max-width: 900px;
+        font-size: 1rem;
     }
 
-    .glass-card {
-        min-height: 132px;
-        padding: 1rem 1.05rem;
+    .role-card, .scenario-card, .result-card, .score-card {
         border-radius: 20px;
-        background: rgba(15, 23, 42, .70);
-        border: 1px solid rgba(148,163,184,.15);
-        box-shadow: 0 12px 28px rgba(0,0,0,.18);
-        backdrop-filter: blur(12px);
+        background: rgba(15,23,42,.78);
+        border: 1px solid rgba(148,163,184,.16);
+        box-shadow: 0 12px 30px rgba(0,0,0,.18);
     }
 
-    .glass-card .label {
-        color: #94a3b8;
-        font-size: .78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .08em;
+    .role-card {
+        padding: 1.2rem 1.3rem;
+        margin-bottom: 1rem;
     }
 
-    .glass-card .value {
-        margin-top: .35rem;
-        color: #f8fafc;
-        font-size: 1.75rem;
-        font-weight: 800;
-        letter-spacing: -.035em;
-    }
-
-    .glass-card .sub {
-        margin-top: .2rem;
-        color: #cbd5e1;
-        font-size: .82rem;
-    }
-
-    .event-card {
-        padding: 1.1rem 1.25rem;
-        border-radius: 20px;
-        background: linear-gradient(135deg, rgba(30,41,59,.94), rgba(15,23,42,.90));
+    .scenario-card {
+        padding: 1.25rem 1.35rem;
+        margin: .8rem 0 1rem 0;
         border-left: 5px solid #22d3ee;
-        box-shadow: 0 14px 35px rgba(0,0,0,.20);
-        margin: .5rem 0 1rem 0;
     }
 
-    .event-card h3 {
-        margin: 0 0 .35rem 0;
-        color: #f8fafc;
+    .result-card {
+        padding: 1.1rem 1.2rem;
+        margin-top: 1rem;
     }
 
-    .event-card p {
-        color: #cbd5e1;
-        margin: 0;
+    .score-card {
+        padding: .9rem 1rem;
+        min-height: 112px;
     }
 
-    .lesson-chip {
+    .tag {
         display: inline-block;
-        padding: .35rem .62rem;
+        padding: .32rem .62rem;
         border-radius: 999px;
-        margin: .15rem .2rem .15rem 0;
-        background: rgba(34,211,238,.11);
-        border: 1px solid rgba(34,211,238,.24);
+        margin-right: .35rem;
+        margin-bottom: .35rem;
+        background: rgba(34,211,238,.12);
+        border: 1px solid rgba(34,211,238,.25);
         color: #a5f3fc;
         font-size: .78rem;
-        font-weight: 600;
+        font-weight: 700;
     }
 
-    .feedback-good {
-        padding: .85rem 1rem;
-        border-radius: 16px;
-        background: rgba(16,185,129,.12);
-        border: 1px solid rgba(52,211,153,.26);
-        color: #d1fae5;
+    .role-title {
+        font-size: 1.45rem;
+        font-weight: 800;
+        margin-bottom: .5rem;
     }
 
-    .feedback-warn {
-        padding: .85rem 1rem;
-        border-radius: 16px;
-        background: rgba(245,158,11,.12);
-        border: 1px solid rgba(251,191,36,.26);
-        color: #fef3c7;
-    }
-
-    .feedback-bad {
-        padding: .85rem 1rem;
-        border-radius: 16px;
-        background: rgba(239,68,68,.12);
-        border: 1px solid rgba(248,113,113,.26);
-        color: #fee2e2;
+    .muted {
+        color: #94a3b8;
     }
 
     div.stButton > button {
-        border-radius: 14px;
-        border: 1px solid rgba(103,232,249,.32);
-        background: linear-gradient(135deg, #0891b2, #6d28d9);
+        width: 100%;
+        min-height: 3.2rem;
+        border-radius: 15px;
+        border: 1px solid rgba(125,211,252,.26);
+        background: linear-gradient(135deg, #0e7490, #6d28d9);
         color: white;
         font-weight: 750;
-        min-height: 3rem;
-        box-shadow: 0 10px 22px rgba(8,145,178,.18);
-        transition: all .18s ease;
+        box-shadow: 0 10px 24px rgba(0,0,0,.18);
     }
 
     div.stButton > button:hover {
-        transform: translateY(-2px);
-        border-color: rgba(255,255,255,.55);
-        box-shadow: 0 14px 28px rgba(109,40,217,.25);
-    }
-
-    [data-testid="stMetric"] {
-        background: rgba(15,23,42,.64);
-        border: 1px solid rgba(148,163,184,.13);
-        padding: .85rem;
-        border-radius: 16px;
+        transform: translateY(-1px);
+        border-color: rgba(255,255,255,.5);
     }
 
     [data-testid="stProgressBar"] > div > div {
         background: linear-gradient(90deg, #22d3ee, #8b5cf6);
     }
 
-    .small-note {
-        color: #94a3b8;
-        font-size: .78rem;
-    }
-
     .footer {
-        text-align: center;
-        color: #64748b;
-        font-size: .76rem;
-        padding: 2rem 0 1rem 0;
+        text-align:center;
+        color:#64748b;
+        font-size:.78rem;
+        margin-top:2rem;
     }
     </style>
     """,
@@ -202,852 +135,579 @@ st.markdown(
 )
 
 
-# ------------------------------------------------------------
-# GAME DATA
-# ------------------------------------------------------------
+@dataclass(frozen=True)
+class Option:
+    text: str
+    result: str
+    scores: Dict[str, int]
+
+
 @dataclass(frozen=True)
 class Scenario:
     title: str
-    description: str
-    claim_multiplier: float
-    demand_shift: float
-    market_return: float
-    trust_shift: float
+    category: str
+    story: str
+    options: List[Option]
     lesson: str
-    institution: str
 
 
-SCENARIOS: List[Scenario] = [
-    Scenario(
-        "Sakin Piyasa",
-        "Hasar frekansı beklentilere yakın. Müşteriler fiyat ve hizmet kalitesini karşılaştırıyor.",
-        0.90, 0.03, 0.018, 1.0,
-        "Risk havuzlama ve doğru fiyatlama normal dönemlerde görünür hâle gelir.",
-        "Sigorta şirketi",
-    ),
-    Scenario(
-        "Bölgesel Sel",
-        "Bir bölgede yoğun yağışlar konut ve işyeri hasarlarını artırdı.",
-        1.42, 0.10, -0.006, -1.0,
-        "Katastrofik olaylar risk yoğunlaşmasını ve reasürans ihtiyacını gösterir.",
-        "Reasürans şirketi",
-    ),
-    Scenario(
-        "Siber Saldırı Dalgası",
-        "KOBİ müşterilerinde fidye yazılımı vakaları hızla yayılıyor.",
-        1.25, 0.14, 0.008, 0.0,
-        "Yeni risklerde veri yetersizliği primlendirmeyi ve teminat tasarımını zorlaştırır.",
-        "Aktüer ve broker",
-    ),
-    Scenario(
-        "Faizlerde Yükseliş",
-        "Tahvil getirileri yükseldi; yatırım portföyü için yeni fırsatlar oluştu.",
-        0.95, -0.01, 0.032, 0.0,
-        "Sigortacılar yalnızca risk üstlenmez; aynı zamanda kurumsal yatırımcıdır.",
-        "Finansal piyasalar",
-    ),
-    Scenario(
-        "Sosyal Medyada Hasar Krizi",
-        "Geciken bir hasar dosyası sosyal medyada geniş yankı buldu.",
-        1.02, -0.08, 0.006, -8.0,
-        "Hasar yönetimi, tüketici güveni ve kurum itibarı sigortanın sürekliliği için kritiktir.",
-        "Eksper ve hasar birimi",
-    ),
-    Scenario(
-        "Düzenleyici Stres Testi",
-        "Otorite, sermaye yeterliliği ve teknik karşılıklar için kapsamlı inceleme başlattı.",
-        1.00, 0.00, 0.004, 0.0,
-        "Düzenleme ve denetim, sigortalıların haklarını ve sistemin ödeme gücünü korur.",
-        "Düzenleyici otorite",
-    ),
-    Scenario(
-        "Deprem Senaryosu",
-        "Düşük olasılıklı fakat yüksek şiddetli bir deprem çok sayıda poliçeyi etkiledi.",
-        2.05, 0.18, -0.020, -2.0,
-        "Büyük risklerin ulusal ve uluslararası reasürans kapasitesiyle paylaşılması gerekir.",
-        "DASK ve reasürans piyasası",
-    ),
-    Scenario(
-        "Sağlık Enflasyonu",
-        "Tedavi maliyetleri beklenenden hızlı arttı; sağlık branşında hasar maliyeti yükseliyor.",
-        1.32, -0.03, 0.010, -1.0,
-        "Primlerin geçmiş veriye değil, beklenen gelecekteki maliyetlere göre belirlenmesi gerekir.",
-        "Aktüerya birimi",
-    ),
-    Scenario(
-        "Acentelerden Büyüme Hamlesi",
-        "Acenteler yeni müşteri kazanmak için kampanya desteği talep ediyor.",
-        0.98, 0.12, 0.009, 1.0,
-        "Dağıtım kanalları sigorta bilincinin ve penetrasyonun artmasında etkilidir.",
-        "Sigorta acenteleri",
-    ),
-    Scenario(
-        "Kredi Daralması",
-        "Bankalar kredi standartlarını sıkılaştırdı; teminat niteliği taşıyan sigortalara ilgi arttı.",
-        1.03, 0.05, -0.008, 0.0,
-        "Sigorta, kredi sistemini ve ekonomik faaliyetlerin devamlılığını destekler.",
-        "Bankalar ve finansal sistem",
-    ),
-]
-
-QUIZ = [
+ROLES = [
     {
-        "q": "Sigorta şirketinin üstlendiği riskin bir bölümünü başka bir kuruma devretmesine ne ad verilir?",
-        "options": ["Koasürans", "Reasürans", "Subrogasyon", "Arbitraj"],
-        "answer": "Reasürans",
-        "explanation": "Reasürans, sigorta şirketinin taşıdığı riskin bir bölümünü başka bir sigortacıya veya reasüröre devretmesidir.",
+        "name": "Sigorta Yaptıran Müşteri",
+        "icon": "👤",
+        "mission": "Karşılaşabileceğin riskleri değerlendirerek ihtiyacına uygun sigorta ürününü seçmek.",
+        "expectation": "Açık bilgi, uygun prim, yeterli teminat ve adil hasar ödemesi.",
+        "responsibility": "Doğru bilgi vermek, poliçeyi incelemek, primi ödemek ve hasarı zamanında bildirmek.",
+        "function": "Prim ödeyerek ortak risk havuzuna katılır ve büyük mali kayıpları sigorta sistemine aktarır.",
+        "badge": "Bilinçli Sigortalı",
     },
     {
-        "q": "Sigorta sözleşmesini yapan ve genellikle primi ödeyen taraf hangisidir?",
-        "options": ["Lehtar", "Sigortalı", "Sigorta ettiren", "Eksper"],
-        "answer": "Sigorta ettiren",
-        "explanation": "Sigorta ettiren sözleşmenin tarafıdır; sigortalı ve lehtar aynı ya da farklı kişiler olabilir.",
+        "name": "Sigorta Şirketi",
+        "icon": "🏢",
+        "mission": "Riskleri değerlendirerek poliçe düzenlemek ve geçerli hasarları karşılamak.",
+        "expectation": "Müşterilerin doğru bilgi vermesi, primlerini ödemesi ve risk azaltıcı önlemlere uyması.",
+        "responsibility": "Poliçe şartlarını açık belirlemek, yeterli fon bulundurmak ve geçerli hasarları zamanında ödemek.",
+        "function": "Çok sayıda kişinin primini ortak havuzda toplar ve zarar yaşayan sigortalılara ödeme yapar.",
+        "badge": "Adil Sigortacı",
     },
     {
-        "q": "Aşağıdakilerden hangisi sigortacılığın finansal sistem içindeki rolüdür?",
-        "options": [
-            "Yalnızca hasar tespiti yapmak",
-            "Uzun vadeli fonları sermaye piyasalarına aktarmak",
-            "Para basmak",
-            "Vergi oranlarını belirlemek",
-        ],
-        "answer": "Uzun vadeli fonları sermaye piyasalarına aktarmak",
-        "explanation": "Sigorta ve emeklilik fonları, topladıkları kaynakları finansal varlıklara yönlendirerek piyasaları derinleştirir.",
+        "name": "Aktüer",
+        "icon": "📊",
+        "mission": "Riskleri ölçmek ve risk düzeyine uygun primlerin belirlenmesine katkı sağlamak.",
+        "expectation": "Doğru müşteri bilgileri, güvenilir geçmiş veriler ve düzenli hasar kayıtları.",
+        "responsibility": "Gerçekçi varsayımlar kullanmak, riskleri adil değerlendirmek ve gelecekteki yükümlülükleri dikkate almak.",
+        "function": "Risk ile prim arasında bilimsel ve sayısal bağlantı kurar.",
+        "badge": "Risk Dedektifi",
     },
     {
-        "q": "Hasarın nedenini ve parasal büyüklüğünü teknik olarak inceleyen uzman kimdir?",
-        "options": ["Aktüer", "Broker", "Eksper", "Lehtar"],
-        "answer": "Eksper",
-        "explanation": "Eksper hasarın nedenini, kapsamını ve tutarını inceler; tazminat kararının teknik girdisini sağlar.",
-    },
-    {
-        "q": "Sermaye yeterliliğini çok düşük tutmanın temel sonucu nedir?",
-        "options": [
-            "Şirketin ödeme gücü riskinin artması",
-            "Her zaman daha yüksek müşteri güveni",
-            "Hasarların tamamen ortadan kalkması",
-            "Prim ihtiyacının sona ermesi",
-        ],
-        "answer": "Şirketin ödeme gücü riskinin artması",
-        "explanation": "Yetersiz sermaye ve rezerv, beklenmeyen hasarlarda yükümlülüklerin karşılanmasını zorlaştırır.",
+        "name": "Reasürans Şirketi",
+        "icon": "🌍",
+        "mission": "Sigorta şirketlerinin üstlendiği büyük risklerin bir bölümünü devralmak.",
+        "expectation": "Doğru risk bilgisi, güvenilir hasar verisi ve açık sözleşme koşulları.",
+        "responsibility": "Devraldığı riskleri dikkatle değerlendirmek ve büyük hasarlarda sözleşmedeki payını karşılamak.",
+        "function": "Büyük ve katastrofik riskleri daha geniş piyasalara dağıtarak sigorta şirketlerini korur.",
+        "badge": "Reasürans Stratejisti",
     },
 ]
 
 
-# ------------------------------------------------------------
-# STATE
-# ------------------------------------------------------------
-DEFAULTS: Dict = {
-    "started": False,
-    "company_name": "Pusula Sigorta",
-    "round": 1,
-    "max_rounds": 10,
-    "capital": 100.0,
-    "reserve": 45.0,
-    "customers": 10000,
-    "trust": 72.0,
-    "solvency": 150.0,
-    "score": 0,
-    "xp": 0,
-    "streak": 0,
-    "history": [],
-    "event": None,
-    "feedback": "",
-    "feedback_type": "good",
-    "quiz_index": 0,
-    "quiz_score": 0,
-    "quiz_answered": False,
-    "achievements": [],
+SCENARIOS = {
+    "Sigorta Yaptıran Müşteri": [
+        Scenario(
+            "Sel Riskindeki Ev",
+            "🌧️ Afet Riski",
+            "Ayşe Hanım dere yatağına yakın bir bölgede ev satın aldı. Konutunu nasıl korumalı?",
+            [
+                Option("En ucuz poliçeyi seç", "Bir yıl sonra sel meydana geldi. Poliçede sel teminatı olmadığı için zarar karşılanmadı.", {"Risk Bilgisi": -10, "Müşteri Güveni": -5}),
+                Option("Sel teminatı bulunan poliçeyi seç", "Sel hasarının büyük bölümü sigorta şirketi tarafından karşılandı.", {"Risk Bilgisi": 10, "Sistem Güvenliği": 5}),
+                Option("Sigorta yaptırma", "Prim ödenmedi; ancak zarar gerçekleştiğinde bütün maliyet müşterinin üzerinde kaldı.", {"Risk Bilgisi": -10, "Sistem Güvenliği": -5}),
+            ],
+            "Poliçenin teminat kapsamı, prim tutarı kadar önemlidir.",
+        ),
+        Scenario(
+            "Eski Otomobil",
+            "🚗 Klasik Risk",
+            "Mehmet Bey'in 12 yaşında ve piyasa değeri düşük bir otomobili vardır.",
+            [
+                Option("Yalnızca zorunlu trafik sigortası yaptır", "Üçüncü kişilere verilen zarar korunur; kendi araç hasarı korunmaz.", {"Risk Bilgisi": 5, "Sistem Güvenliği": 5}),
+                Option("Dar kapsamlı kasko yaptır", "Aracın değeriyle uyumlu ve dengeli bir koruma sağlandı.", {"Risk Bilgisi": 10, "Adil Karar": 5}),
+                Option("En geniş kapsamlı kaskoyu seç", "Geniş koruma sağlandı; fakat aracın değerine göre yüksek prim ödendi.", {"Risk Bilgisi": 3, "Adil Karar": -2}),
+            ],
+            "En kapsamlı poliçe her zaman en uygun ekonomik seçim olmayabilir.",
+        ),
+        Scenario(
+            "Küçük İşletme",
+            "🏪 Ticari Risk",
+            "Bir kafe sahibi yangın, hırsızlık ve faaliyet kesintisi riskleriyle karşı karşıyadır.",
+            [
+                Option("Yalnızca yangın sigortası yaptır", "Yangın korundu; ancak diğer önemli riskler kapsam dışında kaldı.", {"Risk Bilgisi": 3, "Sistem Güvenliği": 2}),
+                Option("Yangın ve hırsızlık teminatı al", "İşletmenin temel fiziksel riskleri daha kapsamlı korundu.", {"Risk Bilgisi": 10, "Sistem Güvenliği": 7}),
+                Option("Sigorta yaptırmadan devam et", "Hırsızlık sonrası ekipman kaybının tamamı işletme sahibi tarafından karşılandı.", {"Risk Bilgisi": -10, "Sistem Güvenliği": -10}),
+            ],
+            "İşletmelerde birden fazla risk birlikte değerlendirilmelidir.",
+        ),
+        Scenario(
+            "Sağlık Poliçesi",
+            "🏥 Sağlık Riski",
+            "Bir poliçe düşük primli ancak yüksek katılım paylı; diğeri daha pahalı ve daha kapsamlıdır.",
+            [
+                Option("Yalnızca düşük prime bak", "Tedavi gerektiğinde beklenenden daha fazla ödeme yapıldı.", {"Risk Bilgisi": -5, "Müşteri Güveni": -3}),
+                Option("Kapsamlı poliçeyi seç", "Daha yüksek prim ödendi; tedavi masrafının daha büyük kısmı karşılandı.", {"Risk Bilgisi": 7, "Sistem Güvenliği": 4}),
+                Option("Koşulları karşılaştır ve ihtiyaca uygun olanı seç", "Bütçe, ihtiyaç ve katılım payı birlikte değerlendirildi.", {"Risk Bilgisi": 12, "Adil Karar": 8}),
+            ],
+            "Bilinçli sigortalı, prim ve teminatı birlikte değerlendirir.",
+        ),
+        Scenario(
+            "Veri İhlali",
+            "💻 Siber Risk",
+            "Bir e-ticaret işletmesi müşteri bilgilerinin çalınması ve satışların durması riskine karşı korunmak istiyor.",
+            [
+                Option("Siber sigorta yaptırma", "Veri ihlali sonrası hukuki giderler, müşteri kaybı ve iş durması işletmenin üzerinde kaldı.", {"Risk Bilgisi": -10, "Sistem Güvenliği": -8}),
+                Option("Yalnızca temel teminat al", "Bazı teknik giderler karşılandı; iş durması ve hukuki giderler kapsam dışında kaldı.", {"Risk Bilgisi": 4, "Sistem Güvenliği": 2}),
+                Option("Veri ihlali, iş durması ve hukuki giderleri kapsayan poliçeyi seç", "Siber olayın farklı mali sonuçlarına karşı daha geniş koruma sağlandı.", {"Risk Bilgisi": 12, "Sistem Güvenliği": 8}),
+            ],
+            "Siber olaylar yalnızca teknik zarar değil, gelir kaybı ve hukuki sorumluluk da doğurabilir.",
+        ),
+        Scenario(
+            "Elektrikli Araç",
+            "🔋 Yeni Nesil Risk",
+            "Yeni bir elektrikli aracın batarya, şarj ve yazılım riskleri bulunuyor.",
+            [
+                Option("Geleneksel araç poliçesini aynen seç", "Bazı yeni teknoloji riskleri poliçe kapsamı dışında kaldı.", {"Risk Bilgisi": -5}),
+                Option("Elektrikli araca özel teminatları incele", "Batarya ve şarj ekipmanı gibi özel riskler dikkate alındı.", {"Risk Bilgisi": 10, "Adil Karar": 5}),
+                Option("Sigorta yaptırma", "Yüksek maliyetli batarya hasarı tamamen araç sahibine kaldı.", {"Risk Bilgisi": -10, "Sistem Güvenliği": -5}),
+            ],
+            "Yeni teknolojiler, yeni teminat ihtiyaçları oluşturabilir.",
+        ),
+    ],
+    "Sigorta Şirketi": [
+        Scenario(
+            "Yangın Önlemi Olmayan Fabrika",
+            "🔥 Klasik Risk",
+            "Bir fabrika sigorta başvurusu yaptı; yangın alarmı ve söndürme sistemi bulunmuyor.",
+            [
+                Option("Riski aynı koşullarla kabul et", "Şirket prim kazandı; fakat büyük yangın riski kontrol edilmedi.", {"Sistem Güvenliği": -10, "Risk Bilgisi": -5}),
+                Option("Güvenlik önlemi şartıyla kabul et", "Fabrika önlem aldı ve yangın riski azaldı.", {"Risk Bilgisi": 10, "Sistem Güvenliği": 10, "Adil Karar": 5}),
+                Option("Başvuruyu doğrudan reddet", "Şirket riskten kaçındı; ancak risk azaltıcı çözüm sunmadı.", {"Sistem Güvenliği": 3, "Adil Karar": -5, "Müşteri Güveni": -5}),
+            ],
+            "Sigorta şirketi risk azaltıcı önlemleri teşvik ederek hem müşteriyi hem sistemi koruyabilir.",
+        ),
+        Scenario(
+            "Şüpheli Hasar Bildirimi",
+            "🔍 Hasar Süreci",
+            "Bir müşteri poliçeyi aldıktan kısa süre sonra yüksek tutarlı hasar bildirdi.",
+            [
+                Option("Hasarı hemen reddet", "İnceleme yapılmadan verilen karar müşteri güvenini zedeledi.", {"Adil Karar": -10, "Müşteri Güveni": -10}),
+                Option("Hasarı hemen öde", "Müşteri memnun oldu; ancak gerekli kontrol yapılmadı.", {"Müşteri Güveni": 4, "Sistem Güvenliği": -8}),
+                Option("Eksper incelemesine gönder", "Hasarın nedeni ve tutarı kanıta dayalı biçimde incelendi.", {"Adil Karar": 10, "Risk Bilgisi": 7, "Sistem Güvenliği": 5}),
+            ],
+            "Hasar kararları varsayıma değil, inceleme ve kanıta dayanmalıdır.",
+        ),
+        Scenario(
+            "Deprem Bölgesinde Yoğunlaşma",
+            "🌍 Katastrofik Risk",
+            "Şirket aynı deprem bölgesinde çok sayıda konut sigortaladı.",
+            [
+                Option("Yeni poliçe satışına sınırsız devam et", "Prim geliri arttı; ancak tek bir olayda çok sayıda hasar riski büyüdü.", {"Sistem Güvenliği": -12, "Risk Bilgisi": -7}),
+                Option("Bölgedeki poliçeleri tamamen durdur", "Risk azaldı; fakat müşterilerin sigortaya erişimi zorlaştı.", {"Sistem Güvenliği": 5, "Adil Karar": -5, "Müşteri Güveni": -5}),
+                Option("Riski reasürans şirketiyle paylaş", "Şirket hizmet vermeye devam ederken büyük kayıp riskinin bir kısmını devretti.", {"Sistem Güvenliği": 12, "Risk Bilgisi": 10}),
+            ],
+            "Aynı bölgede yoğunlaşan riskler reasürans yoluyla daha geniş alana dağıtılabilir.",
+        ),
+        Scenario(
+            "Geciken Hasar Ödemesi",
+            "🤝 Müşteri İlişkisi",
+            "Geçerli olduğu belirlenen bir hasar dosyası uzun süredir bekliyor.",
+            [
+                Option("Dosyayı bekletmeye devam et", "Kısa vadede ödeme yapılmadı; müşteri güveni ciddi biçimde azaldı.", {"Müşteri Güveni": -12, "Adil Karar": -8}),
+                Option("Müşteriye bilgi ver ve ödemeyi hızlandır", "Hasar süreci şeffaf biçimde tamamlandı.", {"Müşteri Güveni": 12, "Adil Karar": 10}),
+                Option("Gerekçe göstermeden reddet", "Müşteri itiraz etti ve şirketin itibarı zarar gördü.", {"Müşteri Güveni": -15, "Adil Karar": -15, "Sistem Güvenliği": -5}),
+            ],
+            "Sigortacılığın temelinde verilen sözün yerine getirilmesi ve güven vardır.",
+        ),
+        Scenario(
+            "Siber Güvenliği Zayıf İşletme",
+            "💻 Siber Risk",
+            "Bir işletme siber sigorta istiyor; düzenli yedekleme ve çok faktörlü doğrulama kullanmıyor.",
+            [
+                Option("Riski doğrudan kabul et", "Şirket önlem almadan sigortalandı ve hasar olasılığı yüksek kaldı.", {"Risk Bilgisi": -8, "Sistem Güvenliği": -8}),
+                Option("Güvenlik önlemleri şartıyla kabul et", "İşletme siber güvenliğini güçlendirdi ve risk azaldı.", {"Risk Bilgisi": 12, "Sistem Güvenliği": 10, "Adil Karar": 5}),
+                Option("Başvuruyu incelemeden reddet", "Riskten kaçınıldı; ancak çözüm geliştirilemedi.", {"Adil Karar": -4, "Müşteri Güveni": -4}),
+            ],
+            "Siber sigorta, güvenlik önlemlerinin geliştirilmesini teşvik edebilir.",
+        ),
+        Scenario(
+            "Tedarik Zinciri Kesintisi",
+            "🚚 Küresel Risk",
+            "Bir üretici, ana tedarikçisinin faaliyetinin durması nedeniyle üretim kaybı yaşayabilir.",
+            [
+                Option("Bu riski hiç dikkate alma", "Dolaylı iş durması riski poliçe dışında kaldı.", {"Risk Bilgisi": -10}),
+                Option("Tedarikçi bağımlılığını incele", "İş kesintisi riski daha doğru değerlendirildi.", {"Risk Bilgisi": 10, "Sistem Güvenliği": 8}),
+                Option("Her işletmeye aynı poliçeyi ver", "İşletmeler arasındaki farklı tedarik bağımlılıkları gözden kaçtı.", {"Risk Bilgisi": -7, "Adil Karar": -4}),
+            ],
+            "Modern işletme riskleri yalnızca fiziksel varlıklardan kaynaklanmaz.",
+        ),
+    ],
+    "Aktüer": [
+        Scenario(
+            "İki Farklı Sürücü",
+            "🚗 Klasik Risk",
+            "Bir sürücü 15 yıldır kazasız; diğerinin son iki yılda üç kazası var.",
+            [
+                Option("İkisine aynı prim uygula", "Risk düzeyleri farklı olmasına rağmen aynı fiyat uygulandı.", {"Risk Bilgisi": -8, "Adil Karar": -5}),
+                Option("Kazası fazla olana daha yüksek prim öner", "Prim geçmiş hasar deneyimiyle uyumlu hâle geldi.", {"Risk Bilgisi": 10, "Sistem Güvenliği": 6}),
+                Option("Kazasız sürücüye daha yüksek prim uygula", "Daha düşük riskli müşteri haksız biçimde cezalandırıldı.", {"Risk Bilgisi": -12, "Adil Karar": -10}),
+            ],
+            "Prim belirlenirken riskle ilişkili geçmiş bilgiler dikkate alınabilir.",
+        ),
+        Scenario(
+            "Yeni ve Eski Bina",
+            "🏠 Klasik Risk",
+            "Yeni binada yangın alarmı var; eski binada güvenlik önlemi bulunmuyor.",
+            [
+                Option("İki bina aynı risk düzeyindedir", "Yapısal özellikler ve önlemler dikkate alınmadı.", {"Risk Bilgisi": -8}),
+                Option("Yeni bina daha yüksek risklidir", "Risk azaltıcı önlemler yanlış değerlendirildi.", {"Risk Bilgisi": -10}),
+                Option("Eski bina daha yüksek risklidir", "Binanın yaşı ve güvenlik önlemleri birlikte değerlendirildi.", {"Risk Bilgisi": 10, "Sistem Güvenliği": 5}),
+            ],
+            "Risk azaltıcı önlemler, hasar olasılığını ve prim düzeyini etkiler.",
+        ),
+        Scenario(
+            "Sel Bölgesindeki İşyeri",
+            "🌧️ Afet Riski",
+            "Bir işyeri sık sık sel yaşanan bir bölgede bulunuyor.",
+            [
+                Option("Düşük risk olarak değerlendir", "Prim beklenen zararı karşılamayabilir.", {"Risk Bilgisi": -10, "Sistem Güvenliği": -8}),
+                Option("Orta risk olarak değerlendir", "Risk kısmen dikkate alındı.", {"Risk Bilgisi": 3}),
+                Option("Yüksek risk ve özel şart öner", "Prim ve koşullar risk düzeyine uygun belirlendi.", {"Risk Bilgisi": 10, "Sistem Güvenliği": 7}),
+            ],
+            "Hasar olasılığı arttıkça prim ve poliçe şartları değişebilir.",
+        ),
+        Scenario(
+            "Primler Hasarları Karşılamıyor",
+            "📉 Finansal Risk",
+            "Şirketin topladığı primler uzun süredir hasar ödemelerine yetmiyor.",
+            [
+                Option("Primleri daha da düşür", "Müşteri sayısı artabilir; ödeme gücü daha da zayıflar.", {"Sistem Güvenliği": -12, "Risk Bilgisi": -10}),
+                Option("Hasar ve risk verilerini yeniden incele", "Yetersiz fiyatlamanın nedeni belirlenir.", {"Risk Bilgisi": 12, "Sistem Güvenliği": 10}),
+                Option("Hasarları ödememeye başla", "Şirket sözleşme yükümlülüğünü ihlal eder.", {"Adil Karar": -15, "Müşteri Güveni": -15, "Sistem Güvenliği": -10}),
+            ],
+            "Yeterli prim, sigorta sisteminin hasar ödeme kapasitesi için gereklidir.",
+        ),
+        Scenario(
+            "Siber Güvenlik Düzeyi",
+            "💻 Siber Risk",
+            "Bir işletme düzenli yedekleme ve personel eğitimi yapıyor; diğer işletme hiçbir önlem almıyor.",
+            [
+                Option("İkisine aynı prim uygula", "Güvenlik düzeyleri arasındaki fark dikkate alınmadı.", {"Risk Bilgisi": -8, "Adil Karar": -5}),
+                Option("Önlem almayan işletmeye daha yüksek prim öner", "Fiyatlama risk azaltıcı önlemleri dikkate aldı.", {"Risk Bilgisi": 12, "Sistem Güvenliği": 8}),
+                Option("Güvenli işletmeye daha yüksek prim uygula", "Risk azaltan işletme haksız biçimde cezalandırıldı.", {"Risk Bilgisi": -12, "Adil Karar": -10}),
+            ],
+            "Siber sigorta fiyatlamasında güvenlik önlemleri ve geçmiş olaylar önemlidir.",
+        ),
+        Scenario(
+            "İklim Riskindeki Artış",
+            "🌡️ Yeni Nesil Risk",
+            "Son yıllarda aşırı yağış ve dolu hasarlarının sıklığı artıyor.",
+            [
+                Option("Eski verileri hiç değiştirmeden kullan", "Değişen risk koşulları fiyatlamaya yansıtılmadı.", {"Risk Bilgisi": -10, "Sistem Güvenliği": -8}),
+                Option("Yeni eğilimleri ve güncel verileri incele", "Prim ve rezervler değişen risk düzeyine göre güncellendi.", {"Risk Bilgisi": 12, "Sistem Güvenliği": 10}),
+                Option("Bütün müşterilere aynı artışı uygula", "Risk farkları gözetilmeden genel bir fiyatlama yapıldı.", {"Risk Bilgisi": -3, "Adil Karar": -6}),
+            ],
+            "Aktüeryal değerlendirme değişen çevresel koşullara uyum sağlamalıdır.",
+        ),
+    ],
+    "Reasürans Şirketi": [
+        Scenario(
+            "Büyük Fabrika",
+            "🔥 Büyük Risk",
+            "Bir sigorta şirketi çok yüksek bedelli bir fabrikayı reasüransa devretmek istiyor.",
+            [
+                Option("Riskin tamamını kabul et", "Tek bir büyük riske aşırı bağımlılık oluştu.", {"Sistem Güvenliği": -8, "Risk Bilgisi": -5}),
+                Option("Riskin belirli bir bölümünü kabul et", "Risk dengeli biçimde paylaşıldı.", {"Sistem Güvenliği": 10, "Risk Bilgisi": 10}),
+                Option("İnceleme yapmadan reddet", "Uygun paylaşım fırsatı değerlendirilmedi.", {"Risk Bilgisi": -3, "Adil Karar": -3}),
+            ],
+            "Reasüransın temel amacı büyük riskleri uygun oranlarda paylaşmaktır.",
+        ),
+        Scenario(
+            "Deprem Portföyü",
+            "🌍 Katastrofik Risk",
+            "Bir sigorta şirketinin çok sayıda poliçesi aynı deprem bölgesinde bulunuyor.",
+            [
+                Option("Her poliçeyi tamamen bağımsız değerlendir", "Tek bir olayda hepsinin hasar görebileceği gözden kaçtı.", {"Risk Bilgisi": -12, "Sistem Güvenliği": -10}),
+                Option("Bölgesel yoğunlaşma riskini dikkate al", "Olası toplam kayıp daha gerçekçi değerlendirildi.", {"Risk Bilgisi": 12, "Sistem Güvenliği": 10}),
+                Option("Yalnızca poliçe sayısına bak", "Poliçelerin aynı olaydan etkilenme ihtimali dikkate alınmadı.", {"Risk Bilgisi": -8}),
+            ],
+            "Çok sayıda küçük risk, aynı olayda birleşerek büyük kayıp yaratabilir.",
+        ),
+        Scenario(
+            "Büyük Enerji Tesisi",
+            "⚡ Küresel Risk",
+            "Bir enerji tesisinin riski tek bir reasürans şirketinin taşıma kapasitesini aşıyor.",
+            [
+                Option("Riski başka reasürörlerle paylaş", "Risk uluslararası piyasalara dağıtıldı.", {"Sistem Güvenliği": 12, "Risk Bilgisi": 10}),
+                Option("Riski tek başına taşı", "Büyük bir hasar mali yapıyı ciddi biçimde zorlayabilir.", {"Sistem Güvenliği": -12}),
+                Option("Hasar gerçekleşince karar ver", "Koruma hasardan önce kurulmadığı için işe yaramadı.", {"Risk Bilgisi": -12, "Sistem Güvenliği": -10}),
+            ],
+            "Reasürans koruması hasar gerçekleşmeden önce sözleşmeyle kurulmalıdır.",
+        ),
+        Scenario(
+            "Eksik Risk Bilgisi",
+            "📄 Bilgi Riski",
+            "Sigorta şirketi devretmek istediği risk hakkında yeterli bilgi sunmadı.",
+            [
+                Option("Riski hemen kabul et", "Üstlenilen yükümlülüğün büyüklüğü tam bilinmedi.", {"Risk Bilgisi": -10, "Sistem Güvenliği": -8}),
+                Option("Ek bilgi ve risk raporu iste", "Risk güvenilir bilgiler üzerinden değerlendirildi.", {"Risk Bilgisi": 12, "Sistem Güvenliği": 8}),
+                Option("Rastgele bir fiyat belirle", "Reasürans bedeli gerçek riskle uyumsuz kaldı.", {"Risk Bilgisi": -12, "Adil Karar": -5}),
+            ],
+            "Sigorta ve reasürans kararları eksiksiz ve doğru bilgiye dayanmalıdır.",
+        ),
+        Scenario(
+            "Ortak Bulut Hizmeti",
+            "☁️ Siber Risk",
+            "Binlerce işletme aynı bulut hizmetini kullanıyor ve ortak bir siber saldırı riski taşıyor.",
+            [
+                Option("Her işletmeyi tamamen bağımsız değerlendir", "Ortak altyapıdan doğan toplu zarar riski gözden kaçtı.", {"Risk Bilgisi": -12, "Sistem Güvenliği": -10}),
+                Option("Ortak altyapı yoğunlaşmasını dikkate al", "Tek saldırının çok sayıda sigortalıyı etkileyebileceği hesaba katıldı.", {"Risk Bilgisi": 12, "Sistem Güvenliği": 10}),
+                Option("Yalnızca müşteri sayısına bak", "Teknolojik bağımlılık ve ortak hata noktası değerlendirilmedi.", {"Risk Bilgisi": -8}),
+            ],
+            "Tek bir siber olay, aynı altyapıyı kullanan çok sayıda sigortalıyı aynı anda etkileyebilir.",
+        ),
+        Scenario(
+            "Küresel Fidye Yazılımı",
+            "🧩 Küresel Siber Risk",
+            "Aynı fidye yazılımı birçok ülkedeki işletmeleri aynı anda etkiliyor.",
+            [
+                Option("Riski yalnızca ülke bazında değerlendir", "Saldırının sınır ötesi etkisi yeterince görülmedi.", {"Risk Bilgisi": -8}),
+                Option("Küresel birikimli zararı dikkate al ve paylaş", "Risk farklı reasürörler arasında dağıtıldı.", {"Risk Bilgisi": 12, "Sistem Güvenliği": 12}),
+                Option("Hasar ihtimalini önemsiz say", "Büyük ve eş zamanlı zarar riski küçümsendi.", {"Risk Bilgisi": -12, "Sistem Güvenliği": -10}),
+            ],
+            "Siber riskler sınır tanımayabilir ve küresel risk paylaşımı gerektirebilir.",
+        ),
+    ],
 }
 
-for key, value in DEFAULTS.items():
-    if key not in st.session_state:
-        st.session_state[key] = value.copy() if isinstance(value, list) else value
+
+DEFAULT_SCORES = {
+    "Risk Bilgisi": 50,
+    "Adil Karar": 50,
+    "Sistem Güvenliği": 50,
+    "Müşteri Güveni": 50,
+}
+
+if "started" not in st.session_state:
+    st.session_state.started = False
+if "player_name" not in st.session_state:
+    st.session_state.player_name = ""
+if "role_index" not in st.session_state:
+    st.session_state.role_index = 0
+if "scenario_index" not in st.session_state:
+    st.session_state.scenario_index = 0
+if "scores" not in st.session_state:
+    st.session_state.scores = DEFAULT_SCORES.copy()
+if "answered" not in st.session_state:
+    st.session_state.answered = False
+if "selected_option" not in st.session_state:
+    st.session_state.selected_option = None
+if "role_intro_seen" not in st.session_state:
+    st.session_state.role_intro_seen = False
+if "badges" not in st.session_state:
+    st.session_state.badges = []
+
+
+def clamp(value: int) -> int:
+    return max(0, min(100, value))
 
 
 def reset_game():
-    for key, value in DEFAULTS.items():
-        st.session_state[key] = value.copy() if isinstance(value, list) else value
+    st.session_state.started = False
+    st.session_state.player_name = ""
+    st.session_state.role_index = 0
+    st.session_state.scenario_index = 0
+    st.session_state.scores = DEFAULT_SCORES.copy()
+    st.session_state.answered = False
+    st.session_state.selected_option = None
+    st.session_state.role_intro_seen = False
+    st.session_state.badges = []
     st.rerun()
 
 
-def current_level() -> int:
-    return 1 + st.session_state.xp // 250
+def score_cards():
+    cols = st.columns(4)
+    icons = ["🧠", "⚖️", "🛡️", "🤝"]
+    for col, icon, (name, value) in zip(cols, icons, st.session_state.scores.items()):
+        with col:
+            st.markdown(
+                f"""
+                <div class="score-card">
+                    <div class="muted">{icon} {name}</div>
+                    <div style="font-size:1.7rem;font-weight:800;margin-top:.35rem;">{value}/100</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
-def money(value: float) -> str:
-    return f"{value:,.1f} mn TL".replace(",", "X").replace(".", ",").replace("X", ".")
-
-
-def choose_event():
-    st.session_state.event = random.choice(SCENARIOS)
-
-
-def add_achievement(name: str):
-    if name not in st.session_state.achievements:
-        st.session_state.achievements.append(name)
-        st.toast(f"🏆 Yeni başarı: {name}", icon="🎉")
-
-
-def decision_engine(
-    premium_level: int,
-    reinsurance: int,
-    reserve_ratio: int,
-    service_quality: int,
-    investment_risk: int,
-):
-    event = st.session_state.event
-
-    # Demand: high premiums reduce demand; service and trust increase it.
-    pricing_effect = (55 - premium_level) / 190
-    service_effect = (service_quality - 50) / 210
-    trust_effect = (st.session_state.trust - 65) / 420
-    growth_rate = event.demand_shift + pricing_effect + service_effect + trust_effect
-    growth_rate = max(-0.22, min(0.26, growth_rate))
-
-    old_customers = st.session_state.customers
-    new_customers = max(2500, int(old_customers * (1 + growth_rate)))
-
-    # Financial flows in million TL.
-    exposure = new_customers / 10000
-    premium_income = exposure * (premium_level / 50) * 15.5
-
-    base_claim = exposure * 8.2 * event.claim_multiplier
-    mitigation = 1 - (service_quality - 50) / 500
-    gross_claim = max(1.0, base_claim * mitigation)
-
-    ceded_share = reinsurance / 100
-    reinsurance_cost = premium_income * ceded_share * 0.33
-    recovered_claim = gross_claim * ceded_share * 0.76
-    net_claim = gross_claim - recovered_claim
-
-    operating_cost = 2.1 + exposure * (service_quality / 100) * 2.3
-    investable_funds = max(0, st.session_state.reserve + premium_income - reinsurance_cost)
-    investment_return = investable_funds * (
-        event.market_return + ((investment_risk - 50) / 100) * 0.028
-    )
-
-    underwriting_result = premium_income - net_claim - reinsurance_cost - operating_cost
-    period_result = underwriting_result + investment_return
-
-    target_reserve = premium_income * (reserve_ratio / 100)
-    reserve_change = (target_reserve - st.session_state.reserve) * 0.36
-    new_reserve = max(3.0, st.session_state.reserve + reserve_change + max(period_result, 0) * 0.18)
-
-    new_capital = st.session_state.capital + period_result - max(0, reserve_change) * 0.08
-
-    # Trust and solvency.
-    claim_pressure = gross_claim / max(premium_income, 0.1)
-    trust_delta = event.trust_shift
-    trust_delta += (service_quality - 55) / 9
-    trust_delta -= max(0, premium_level - 68) / 8
-    trust_delta -= max(0, claim_pressure - 0.95) * 6
-    new_trust = max(0.0, min(100.0, st.session_state.trust + trust_delta))
-
-    required_capital = max(25.0, new_customers / 10000 * 48 + gross_claim * 1.25)
-    solvency = max(0.0, min(300.0, ((new_capital + new_reserve * 0.52) / required_capital) * 100))
-
-    # Balanced decision score.
-    round_score = 0
-    round_score += int(max(-35, min(35, period_result * 3.2)))
-    round_score += int((new_trust - 55) * 0.55)
-    round_score += int((solvency - 100) * 0.24)
-    round_score += 12 if 15 <= reinsurance <= 45 else -5
-    round_score += 10 if 45 <= reserve_ratio <= 75 else -8
-    round_score = max(-50, min(100, round_score))
-
-    st.session_state.capital = new_capital
-    st.session_state.reserve = new_reserve
-    st.session_state.customers = new_customers
-    st.session_state.trust = new_trust
-    st.session_state.solvency = solvency
-    st.session_state.score += round_score
-    st.session_state.xp += max(15, round_score + 45)
-    st.session_state.streak = st.session_state.streak + 1 if round_score >= 35 else 0
-
-    st.session_state.history.append(
-        {
-            "Dönem": st.session_state.round,
-            "Olay": event.title,
-            "Müşteri": new_customers,
-            "Prim Geliri": round(premium_income, 2),
-            "Brüt Hasar": round(gross_claim, 2),
-            "Net Hasar": round(net_claim, 2),
-            "Dönem Sonucu": round(period_result, 2),
-            "Sermaye": round(new_capital, 2),
-            "Rezerv": round(new_reserve, 2),
-            "Güven": round(new_trust, 1),
-            "Solvency": round(solvency, 1),
-            "Puan": round_score,
-        }
-    )
-
-    if solvency >= 145 and new_trust >= 75 and period_result > 0:
-        feedback_type = "good"
-        feedback = (
-            f"⚡ Dengeli yönetim! {event.institution} ile ilişkileri doğru yönettiniz. "
-            f"Dönem sonucu {money(period_result)}, güven {new_trust:.0f}/100 ve ödeme gücü %{solvency:.0f}."
-        )
-    elif solvency < 100:
-        feedback_type = "bad"
-        feedback = (
-            f"🚨 Sermaye alarmı! Ödeme gücü oranı %{solvency:.0f}'a düştü. "
-            "Daha güçlü rezerv, kontrollü büyüme veya uygun reasürans koruması gerekiyor."
-        )
-    elif new_trust < 55:
-        feedback_type = "bad"
-        feedback = (
-            f"📣 İtibar riski yükseldi. Güven {new_trust:.0f}/100 seviyesinde. "
-            "Sigortacılıkta finansal sonuç kadar adil fiyatlama ve hasar hizmeti de önemlidir."
-        )
-    else:
-        feedback_type = "warn"
-        feedback = (
-            f"🧭 Şirket ayakta, fakat dengeniz kırılgan. Dönem sonucu {money(period_result)}, "
-            f"güven {new_trust:.0f}/100 ve ödeme gücü %{solvency:.0f}."
-        )
-
-    st.session_state.feedback = feedback
-    st.session_state.feedback_type = feedback_type
-
-    if st.session_state.streak >= 3:
-        add_achievement("Üç Dönemlik İstikrar")
-    if st.session_state.solvency >= 180:
-        add_achievement("Güçlü Bilanço")
-    if st.session_state.trust >= 88:
-        add_achievement("Sigortalının Güveni")
-    if reinsurance >= 25 and event.claim_multiplier >= 1.4:
-        add_achievement("Reasürans Ustası")
-
-    st.session_state.round += 1
-    choose_event()
-
-
-# ------------------------------------------------------------
-# SIDEBAR
-# ------------------------------------------------------------
-with st.sidebar:
-    st.markdown("## 🛡️ Sigorta Ekosistemi")
-    st.caption("Yönetim simülasyonu · Lisans düzeyi")
-
-    if not st.session_state.started:
-        company = st.text_input("Şirketinizin adı", value=st.session_state.company_name)
-        rounds = st.select_slider("Oyun uzunluğu", options=[6, 8, 10, 12], value=10)
-        if st.button("🚀 Simülasyonu Başlat", use_container_width=True):
-            st.session_state.company_name = company.strip() or "Pusula Sigorta"
-            st.session_state.max_rounds = rounds
-            st.session_state.started = True
-            choose_event()
-            st.rerun()
-    else:
-        st.markdown(f"### {st.session_state.company_name}")
-        st.caption(f"Seviye {current_level()} · {st.session_state.xp} XP")
-        level_progress = (st.session_state.xp % 250) / 250
-        st.progress(level_progress)
-        st.caption(f"Sonraki seviyeye {250 - (st.session_state.xp % 250)} XP")
-
-        st.divider()
-        st.markdown("#### 🎯 Görev")
-        st.write(
-            "Şirketi büyütürken ödeme gücünü, müşteri güvenini ve toplumsal korumayı birlikte yönet."
-        )
-
-        st.markdown("#### 🏆 Başarılar")
-        if st.session_state.achievements:
-            for badge in st.session_state.achievements:
-                st.markdown(f"✅ {badge}")
-        else:
-            st.caption("Henüz başarı rozeti kazanılmadı.")
-
-        st.divider()
-        if st.button("🔄 Oyunu Sıfırla", use_container_width=True):
-            reset_game()
-
-
-# ------------------------------------------------------------
-# LANDING SCREEN
-# ------------------------------------------------------------
 if not st.session_state.started:
     st.markdown(
         """
         <div class="hero">
-            <h1>Bir sigorta şirketini yönetebilir misiniz?</h1>
-            <p>
-                Primleri belirleyin, riskleri reasüre edin, teknik karşılıkları yönetin,
-                hasar krizlerini çözün ve finansal sistemi ayakta tutun.
-                Her kararınız müşterileri, kurumları ve bilançoyu etkiler.
-            </p>
+            <h1>🛡️ Sigorta Ekosistemi</h1>
+            <p>Aynı riski farklı tarafların gözünden değerlendir ve sigorta sisteminin nasıl çalıştığını keşfet.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     c1, c2, c3, c4 = st.columns(4)
-    landing_cards = [
-        ("🏢", "Kurumları keşfet", "Sigorta şirketi, reasürör, acente, broker, eksper, aktüer ve düzenleyici."),
-        ("⚖️", "Denge kur", "Kârlılık, güven, rezerv, büyüme ve ödeme gücü aynı anda yönetilir."),
-        ("🌪️", "Şoklara hazırlan", "Sel, deprem, siber risk, sağlık enflasyonu ve piyasa hareketleri."),
-        ("🎓", "Karardan öğren", "Her turun sonunda kavramsal ve finansal geri bildirim alın."),
-    ]
-    for col, (icon, title, text) in zip([c1, c2, c3, c4], landing_cards):
+    for col, role in zip([c1, c2, c3, c4], ROLES):
         with col:
             st.markdown(
                 f"""
-                <div class="glass-card">
-                    <div class="value">{icon}</div>
-                    <div style="font-weight:800; margin:.25rem 0;">{title}</div>
-                    <div class="sub">{text}</div>
+                <div class="role-card">
+                    <div style="font-size:2rem;">{role['icon']}</div>
+                    <div class="role-title">{role['name']}</div>
+                    <div class="muted">{role['mission']}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-    st.markdown("### Oyun nasıl işler?")
-    st.markdown(
-        """
-        <span class="lesson-chip">1 · Piyasa olayını analiz et</span>
-        <span class="lesson-chip">2 · Beş yönetim kararı al</span>
-        <span class="lesson-chip">3 · Finansal sonucu gör</span>
-        <span class="lesson-chip">4 · Kurumsal ilişkiyi öğren</span>
-        <span class="lesson-chip">5 · Yeni döneme geç</span>
-        """,
-        unsafe_allow_html=True,
+    st.markdown("### Nasıl oynanır?")
+    st.write(
+        "Dört rolü sırayla tamamla. Her rolde altı kısa senaryo göreceksin. "
+        "Üç seçenekten birini seç, sonucu oku ve puanlarını geliştir."
     )
-    st.info("Başlamak için sol menüden şirket adını yazın ve **Simülasyonu Başlat** düğmesine basın.")
+
+    player = st.text_input("Adın veya öğrenci numaran", placeholder="Örn. Ayşe Yılmaz")
+    if st.button("Oyuna Başla"):
+        st.session_state.player_name = player.strip() or "Öğrenci"
+        st.session_state.started = True
+        st.rerun()
+
     st.stop()
 
 
-# ------------------------------------------------------------
-# END GAME
-# ------------------------------------------------------------
-if st.session_state.round > st.session_state.max_rounds:
-    st.markdown(
-        f"""
-        <div class="hero">
-            <h1>Sezon tamamlandı.</h1>
-            <p>{st.session_state.company_name} için yönetim kuruluna sunulacak sonuçlar hazır.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+role = ROLES[st.session_state.role_index]
+role_scenarios = SCENARIOS[role["name"]]
 
-    final_score = st.session_state.score
-    if final_score >= st.session_state.max_rounds * 50:
-        rank = "Sistem Mimarı"
-        message = "Kârlılık, güven ve ödeme gücünü birlikte yöneterek sürdürülebilir bir sigorta sistemi kurdunuz."
-    elif final_score >= st.session_state.max_rounds * 25:
-        rank = "Dengeli Sigortacı"
-        message = "Şirketi başarıyla yönettiniz; bazı dönemlerde daha güçlü risk dengesi kurulabilirdi."
-    else:
-        rank = "Risk Çırağı"
-        message = "Simülasyon tamamlandı. Yeni oyunda rezerv, reasürans ve müşteri güvenini daha dengeli yönetin."
+total_steps = len(ROLES) * 6
+completed_steps = st.session_state.role_index * 6 + st.session_state.scenario_index
+st.progress(completed_steps / total_steps)
 
-    a, b, c, d = st.columns(4)
-    a.metric("Yönetici unvanı", rank)
-    b.metric("Toplam puan", final_score)
-    c.metric("Son sermaye", money(st.session_state.capital))
-    d.metric("Müşteri güveni", f"{st.session_state.trust:.0f}/100")
-
-    st.success(message)
-
-    if st.session_state.history:
-        hist = pd.DataFrame(st.session_state.history)
-        col_chart, col_table = st.columns([1.15, 1])
-        with col_chart:
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=hist["Dönem"], y=hist["Sermaye"],
-                mode="lines+markers", name="Sermaye"
-            ))
-            fig.add_trace(go.Scatter(
-                x=hist["Dönem"], y=hist["Rezerv"],
-                mode="lines+markers", name="Rezerv"
-            ))
-            fig.update_layout(
-                title="Finansal gelişim",
-                template="plotly_dark",
-                height=390,
-                margin=dict(l=20, r=20, t=55, b=20),
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                legend=dict(orientation="h", y=1.1),
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        with col_table:
-            st.dataframe(
-                hist[["Dönem", "Olay", "Dönem Sonucu", "Güven", "Solvency", "Puan"]],
-                use_container_width=True,
-                hide_index=True,
-            )
-
-        csv = hist.to_csv(index=False).encode("utf-8-sig")
-        st.download_button(
-            "📥 Sonuçları CSV olarak indir",
-            csv,
-            file_name="sigorta_simulasyonu_sonuclari.csv",
-            mime="text/csv",
-            use_container_width=True,
-        )
-
-    if st.button("🎮 Yeni Bir Sezon Başlat", use_container_width=True):
-        reset_game()
-    st.stop()
-
-
-# ------------------------------------------------------------
-# MAIN DASHBOARD
-# ------------------------------------------------------------
 st.markdown(
     f"""
     <div class="hero">
-        <h1>{st.session_state.company_name}</h1>
-        <p>Dönem {st.session_state.round}/{st.session_state.max_rounds} · Riskleri yönetin, güveni koruyun, sistemi büyütün.</p>
+        <h1>{role['icon']} {role['name']}</h1>
+        <p>{st.session_state.player_name} · Rol {st.session_state.role_index + 1}/4 · Senaryo {st.session_state.scenario_index + 1}/6</p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-m1, m2, m3, m4, m5 = st.columns(5)
-metric_data = [
-    ("💰 Sermaye", money(st.session_state.capital), "Beklenmeyen kayıplara tampon"),
-    ("🏦 Teknik rezerv", money(st.session_state.reserve), "Gelecekteki hasar yükümlülüğü"),
-    ("👥 Sigortalı", f"{st.session_state.customers:,}".replace(",", "."), "Risk havuzunun büyüklüğü"),
-    ("🤝 Güven", f"{st.session_state.trust:.0f}/100", "Müşteri ve kamu itibarı"),
-    ("🧱 Ödeme gücü", f"%{st.session_state.solvency:.0f}", "Hedef: %120 ve üzeri"),
-]
-for col, (label, value, sub) in zip([m1, m2, m3, m4, m5], metric_data):
-    with col:
-        st.markdown(
-            f"""
-            <div class="glass-card">
-                <div class="label">{label}</div>
-                <div class="value">{value}</div>
-                <div class="sub">{sub}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+score_cards()
 
-tab_game, tab_map, tab_lab, tab_quiz = st.tabs(
-    ["🎮 Yönetim Masası", "🕸️ Sistem Haritası", "📊 Analiz Laboratuvarı", "🧠 Bilgi Arenası"]
-)
-
-
-# ------------------------------------------------------------
-# TAB 1: GAME
-# ------------------------------------------------------------
-with tab_game:
-    event = st.session_state.event
+if not st.session_state.role_intro_seen:
     st.markdown(
         f"""
-        <div class="event-card">
-            <h3>⚡ Dönemin olayı: {event.title}</h3>
-            <p>{event.description}</p>
-            <div style="margin-top:.7rem;">
-                <span class="lesson-chip">Odaktaki kurum: {event.institution}</span>
-            </div>
+        <div class="role-card">
+            <div class="role-title">Rol Kartı</div>
+            <p><b>Görevin:</b> {role['mission']}</p>
+            <p><b>Beklentin:</b> {role['expectation']}</p>
+            <p><b>Sorumluluğun:</b> {role['responsibility']}</p>
+            <p><b>Sistemdeki işlevin:</b> {role['function']}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button("Rolü Anladım, Senaryolara Geç"):
+        st.session_state.role_intro_seen = True
+        st.rerun()
+    st.stop()
+
+
+scenario = role_scenarios[st.session_state.scenario_index]
+
+st.markdown(
+    f"""
+    <div class="scenario-card">
+        <span class="tag">{scenario.category}</span>
+        <h2 style="margin:.4rem 0 .6rem 0;">{scenario.title}</h2>
+        <p style="font-size:1.05rem;color:#e2e8f0;">{scenario.story}</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+if not st.session_state.answered:
+    st.markdown("### Kararın ne olur?")
+    for idx, option in enumerate(scenario.options):
+        if st.button(option.text, key=f"opt_{st.session_state.role_index}_{st.session_state.scenario_index}_{idx}"):
+            st.session_state.selected_option = idx
+            for score_name, delta in option.scores.items():
+                st.session_state.scores[score_name] = clamp(
+                    st.session_state.scores[score_name] + delta
+                )
+            st.session_state.answered = True
+            st.rerun()
+else:
+    option = scenario.options[st.session_state.selected_option]
+    score_text = " · ".join(
+        [f"{name} {delta:+d}" for name, delta in option.scores.items()]
+    )
+
+    st.markdown(
+        f"""
+        <div class="result-card">
+            <div class="role-title">Kararının sonucu</div>
+            <p>{option.result}</p>
+            <p><b>Puan etkisi:</b> {score_text}</p>
+            <p><b>Öğrenme mesajı:</b> {scenario.lesson}</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    left, right = st.columns([1.25, .75], gap="large")
+    if st.button("Sonraki Senaryo"):
+        st.session_state.answered = False
+        st.session_state.selected_option = None
+        st.session_state.scenario_index += 1
 
-    with left:
-        st.subheader("Yönetim kararları")
-        st.caption("Her kararın bir faydası ve fırsat maliyeti vardır.")
+        if st.session_state.scenario_index >= 6:
+            if role["badge"] not in st.session_state.badges:
+                st.session_state.badges.append(role["badge"])
 
-        premium_level = st.slider(
-            "1. Ortalama prim düzeyi",
-            min_value=30,
-            max_value=90,
-            value=55,
-            help="Düşük prim talebi artırabilir; fakat hasarları karşılamak zorlaşabilir.",
-        )
-        reinsurance = st.slider(
-            "2. Reasüransa devredilen risk (%)",
-            min_value=0,
-            max_value=70,
-            value=25,
-            help="Reasürans büyük hasarlara karşı korur; buna karşılık maliyeti vardır.",
-        )
-        reserve_ratio = st.slider(
-            "3. Hedef teknik karşılık oranı (%)",
-            min_value=20,
-            max_value=95,
-            value=60,
-            help="Yüksek rezerv güvenliği artırır; fakat serbest sermayeyi sınırlar.",
-        )
-        service_quality = st.slider(
-            "4. Hasar hizmeti ve müşteri deneyimi",
-            min_value=20,
-            max_value=100,
-            value=65,
-            help="Daha iyi hizmet güven yaratır; operasyon maliyetini yükseltir.",
-        )
-        investment_risk = st.slider(
-            "5. Yatırım portföyü risk düzeyi",
-            min_value=0,
-            max_value=100,
-            value=40,
-            help="Yüksek risk daha yüksek getiri potansiyeli ve daha büyük oynaklık yaratır.",
-        )
+            st.session_state.role_index += 1
+            st.session_state.scenario_index = 0
+            st.session_state.role_intro_seen = False
 
-        if st.button("⚙️ Kararları Uygula ve Dönemi Kapat", use_container_width=True):
-            decision_engine(
-                premium_level,
-                reinsurance,
-                reserve_ratio,
-                service_quality,
-                investment_risk,
-            )
-            st.rerun()
+            if st.session_state.role_index >= len(ROLES):
+                st.session_state.role_index = len(ROLES)
 
-    with right:
-        st.subheader("Karar radarı")
-        radar_values = [
-            premium_level,
-            reinsurance / 70 * 100,
-            reserve_ratio,
-            service_quality,
-            investment_risk,
-        ]
-        radar_labels = ["Prim", "Reasürans", "Rezerv", "Hizmet", "Yatırım riski"]
-        fig = go.Figure(
-            data=go.Scatterpolar(
-                r=radar_values + [radar_values[0]],
-                theta=radar_labels + [radar_labels[0]],
-                fill="toself",
-                name="Karar profili",
-            )
-        )
-        fig.update_layout(
-            template="plotly_dark",
-            height=360,
-            margin=dict(l=20, r=20, t=35, b=20),
-            paper_bgcolor="rgba(0,0,0,0)",
-            polar=dict(
-                bgcolor="rgba(15,23,42,.35)",
-                radialaxis=dict(visible=True, range=[0, 100]),
-            ),
-            showlegend=False,
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-        st.markdown("#### Bu olayın öğretim mesajı")
-        st.info(event.lesson)
-
-        if st.session_state.feedback:
-            css_class = {
-                "good": "feedback-good",
-                "warn": "feedback-warn",
-                "bad": "feedback-bad",
-            }[st.session_state.feedback_type]
-            st.markdown(
-                f'<div class="{css_class}">{st.session_state.feedback}</div>',
-                unsafe_allow_html=True,
-            )
+        st.rerun()
 
 
-# ------------------------------------------------------------
-# TAB 2: SYSTEM MAP
-# ------------------------------------------------------------
-with tab_map:
-    st.subheader("Sigorta sisteminin aktörleri ve değer akışı")
-    st.caption("Bir aktöre ait kartı açarak görevini ve diğer taraflarla ilişkisini inceleyin.")
-
-    institutions = {
-        "🏢 Sigorta Şirketi": (
-            "Prim karşılığında riski üstlenir, poliçe düzenler ve hasar gerçekleştiğinde tazminat öder.",
-            "Sigortalı, acente, broker, eksper, aktüer, reasürör ve düzenleyiciyle bağlantılıdır.",
-        ),
-        "🌍 Reasürans Şirketi": (
-            "Sigortacının üstlendiği riskin bir bölümünü devralır; katastrofik kayıpların paylaşılmasını sağlar.",
-            "Yerel riskleri uluslararası risk havuzlarına ve sermayeye bağlar.",
-        ),
-        "🤝 Acente": (
-            "Sigorta şirketi adına ürünleri tanıtır, satış ve müşteri iletişimi yürütür.",
-            "Sigorta şirketini temsil eden temel dağıtım kanallarından biridir.",
-        ),
-        "🧭 Broker": (
-            "Müşterinin risklerini analiz eder ve uygun sigorta çözümünü bulmaya çalışır.",
-            "Esas olarak sigorta ettirenin menfaatini temsil eder.",
-        ),
-        "🔍 Eksper": (
-            "Hasarın nedenini, kapsamını ve parasal büyüklüğünü teknik olarak inceler.",
-            "Adil ve kanıta dayalı tazminat sürecine katkı sağlar.",
-        ),
-        "📐 Aktüer": (
-            "Olasılık, istatistik ve finans yöntemleriyle prim, rezerv ve uzun vadeli yükümlülükleri hesaplar.",
-            "Riskin ölçülmesi ile finansal sürdürülebilirlik arasında köprü kurar.",
-        ),
-        "⚖️ Düzenleyici Otorite": (
-            "Mali yeterlilik, tüketici koruması ve piyasa disiplinini gözetir.",
-            "Sigortalıların haklarını ve sistemin istikrarını korur.",
-        ),
-        "👤 Sigorta Ettiren / Sigortalı": (
-            "Sigorta ettiren sözleşmeyi kurar ve primi öder; sigortalının ekonomik menfaati koruma altındadır.",
-            "Aynı kişi olabilecekleri gibi farklı kişiler de olabilirler.",
-        ),
-        "🎯 Lehtar / Üçüncü Kişi": (
-            "Lehtar sigorta bedelini almaya hak kazanır; zarar gören üçüncü kişi sorumluluk sigortalarında korunabilir.",
-            "Sigorta sözleşmesinin etkisi yalnızca sigorta ettirenle sınırlı değildir.",
-        ),
-        "📈 Finansal Piyasalar": (
-            "Primlerden oluşan fonların tahvil, hisse ve diğer varlıklara yönelmesini sağlar.",
-            "Sigorta şirketleri kurumsal yatırımcı olarak uzun vadeli fon arz eder.",
-        ),
-    }
-
-    c1, c2 = st.columns(2)
-    for idx, (name, (role, relation)) in enumerate(institutions.items()):
-        target = c1 if idx % 2 == 0 else c2
-        with target:
-            with st.expander(name):
-                st.write(role)
-                st.caption(relation)
-
-    st.markdown("### Temel değer döngüsü")
-    st.code(
-        "Prim → Risk Havuzu → Teknik Karşılık ve Yatırım → Hasar Tespiti → Tazminat → Ekonomik Devamlılık",
-        language=None,
+if st.session_state.role_index >= len(ROLES):
+    st.markdown(
+        """
+        <div class="hero">
+            <h1>🏆 Sigorta Ekosistemi Tamamlandı</h1>
+            <p>Dört farklı rolü tamamladın ve sigorta sisteminin nasıl birlikte çalıştığını gördün.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
+    score_cards()
+    average_score = round(sum(st.session_state.scores.values()) / 4)
 
-# ------------------------------------------------------------
-# TAB 3: ANALYTICS
-# ------------------------------------------------------------
-with tab_lab:
-    st.subheader("Şirket performansı ve finansal sistem göstergeleri")
-
-    if not st.session_state.history:
-        st.info("İlk dönemi tamamladığınızda grafikler burada oluşacak.")
+    if average_score >= 80:
+        title = "Sigorta Ekosistemi Ustası"
+    elif average_score >= 65:
+        title = "Güçlü Risk Yöneticisi"
     else:
-        hist = pd.DataFrame(st.session_state.history)
+        title = "Sigorta Kaşifi"
 
-        chart1, chart2 = st.columns(2)
-        with chart1:
-            fig_fin = go.Figure()
-            fig_fin.add_trace(go.Scatter(
-                x=hist["Dönem"], y=hist["Sermaye"],
-                mode="lines+markers", name="Sermaye"
-            ))
-            fig_fin.add_trace(go.Scatter(
-                x=hist["Dönem"], y=hist["Rezerv"],
-                mode="lines+markers", name="Teknik rezerv"
-            ))
-            fig_fin.update_layout(
-                title="Bilanço dayanıklılığı",
-                template="plotly_dark",
-                height=350,
-                margin=dict(l=20, r=20, t=55, b=20),
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                legend=dict(orientation="h", y=1.12),
-            )
-            st.plotly_chart(fig_fin, use_container_width=True)
+    st.success(f"Genel unvanın: **{title}**")
 
-        with chart2:
-            fig_sys = go.Figure()
-            fig_sys.add_trace(go.Scatter(
-                x=hist["Dönem"], y=hist["Güven"],
-                mode="lines+markers", name="Müşteri güveni"
-            ))
-            fig_sys.add_trace(go.Scatter(
-                x=hist["Dönem"], y=hist["Solvency"],
-                mode="lines+markers", name="Ödeme gücü"
-            ))
-            fig_sys.add_hline(y=120, line_dash="dash", annotation_text="Solvency referansı")
-            fig_sys.update_layout(
-                title="Güven ve ödeme gücü",
-                template="plotly_dark",
-                height=350,
-                margin=dict(l=20, r=20, t=55, b=20),
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                legend=dict(orientation="h", y=1.12),
-            )
-            st.plotly_chart(fig_sys, use_container_width=True)
+    st.markdown("### Kazandığın rozetler")
+    for badge in st.session_state.badges:
+        st.write(f"🏅 {badge}")
 
-        st.dataframe(hist, use_container_width=True, hide_index=True)
+    st.info(
+        "Sigorta sistemi; müşteriler, sigorta şirketleri, aktüerler ve reasürans şirketlerinin "
+        "birbirini tamamlayan görevleri sayesinde çalışır. Risk değerlendirilir, primlerle ortak "
+        "bir fon oluşturulur ve büyük zararlar taraflar arasında paylaşılır."
+    )
 
-        latest = hist.iloc[-1]
-        st.markdown("### Son dönemin finansal yorumu")
-        loss_ratio = latest["Net Hasar"] / max(latest["Prim Geliri"], .01) * 100
-        combined_proxy = (
-            latest["Net Hasar"] + max(0, latest["Prim Geliri"] * 0.20)
-        ) / max(latest["Prim Geliri"], .01) * 100
-
-        x1, x2, x3 = st.columns(3)
-        x1.metric("Yaklaşık net hasar/prim", f"%{loss_ratio:.1f}")
-        x2.metric("Basitleştirilmiş birleşik oran", f"%{combined_proxy:.1f}")
-        x3.metric("Dönem puanı", f"{latest['Puan']:+.0f}")
-
-        st.caption(
-            "Bu göstergeler eğitim amacıyla basitleştirilmiştir; gerçek şirket analizinde branş, dönem, "
-            "kazanılmış prim, teknik karşılık, gider ve sermaye düzenlemeleri ayrıntılı biçimde ele alınır."
-        )
-
-
-# ------------------------------------------------------------
-# TAB 4: QUIZ
-# ------------------------------------------------------------
-with tab_quiz:
-    st.subheader("Bilgi Arenası")
-    st.caption("Doğru yanıtlar oyun puanınıza ve XP seviyenize katkı sağlar.")
-
-    q_index = st.session_state.quiz_index
-    if q_index >= len(QUIZ):
-        st.success(
-            f"Arena tamamlandı: {st.session_state.quiz_score}/{len(QUIZ)} doğru."
-        )
-        if st.session_state.quiz_score == len(QUIZ):
-            add_achievement("Sigorta Bilgesi")
-        if st.button("Bilgi Arenasını Yeniden Başlat"):
-            st.session_state.quiz_index = 0
-            st.session_state.quiz_score = 0
-            st.session_state.quiz_answered = False
-            st.rerun()
-    else:
-        question = QUIZ[q_index]
-        st.markdown(f"### Soru {q_index + 1}/{len(QUIZ)}")
-        st.write(question["q"])
-
-        choice = st.radio(
-            "Yanıtınız",
-            question["options"],
-            index=None,
-            key=f"quiz_{q_index}",
-        )
-
-        if not st.session_state.quiz_answered:
-            if st.button("Yanıtı Kontrol Et", disabled=choice is None):
-                st.session_state.quiz_answered = True
-                if choice == question["answer"]:
-                    st.session_state.quiz_score += 1
-                    st.session_state.score += 20
-                    st.session_state.xp += 35
-                st.rerun()
-        else:
-            if choice == question["answer"]:
-                st.success(f"Doğru! {question['explanation']}")
-            else:
-                st.error(
-                    f"Doğru yanıt: {question['answer']}. {question['explanation']}"
-                )
-
-            if st.button("Sonraki Soru →"):
-                st.session_state.quiz_index += 1
-                st.session_state.quiz_answered = False
-                st.rerun()
+    if st.button("Oyunu Yeniden Başlat"):
+        reset_game()
 
 
 st.markdown(
     """
     <div class="footer">
-        Eğitim amaçlı simülasyon · Sayısal sonuçlar gerçek sigorta tarifesi veya mali yeterlilik hesabı değildir.
+        Eğitim amaçlı hazırlanmıştır. Senaryolar gerçek poliçe veya fiyatlama tavsiyesi değildir.
     </div>
     """,
     unsafe_allow_html=True,
 )
-
