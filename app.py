@@ -6,6 +6,8 @@ from typing import Dict, List
 import streamlit as st
 
 
+APP_VERSION = "3.0.0"
+
 st.set_page_config(
     page_title="Sigorta Ekosistemi",
     page_icon="🛡️",
@@ -567,6 +569,63 @@ if not st.session_state.started:
     st.stop()
 
 
+# Eski bir Streamlit oturumundan geçersiz değer kalmışsa güvenli aralığa getir.
+try:
+    st.session_state.role_index = int(st.session_state.role_index)
+except (TypeError, ValueError):
+    st.session_state.role_index = 0
+
+if st.session_state.role_index < 0:
+    st.session_state.role_index = 0
+
+# Oyun tamamlandıysa, yeni bir rol okumaya çalışmadan sonuç ekranını göster.
+if st.session_state.role_index >= len(ROLES):
+    st.progress(1.0)
+    st.markdown(
+        """
+        <div class="hero">
+            <h1>🏆 Sigorta Ekosistemi Tamamlandı</h1>
+            <p>Dört farklı rolü tamamladın ve sigorta sisteminin nasıl birlikte çalıştığını gördün.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    score_cards()
+    average_score = round(sum(st.session_state.scores.values()) / 4)
+
+    if average_score >= 80:
+        title = "Sigorta Ekosistemi Ustası"
+    elif average_score >= 65:
+        title = "Güçlü Risk Yöneticisi"
+    else:
+        title = "Sigorta Kaşifi"
+
+    st.success(f"Genel unvanın: **{title}**")
+
+    st.markdown("### Kazandığın rozetler")
+    for badge in st.session_state.badges:
+        st.write(f"🏅 {badge}")
+
+    st.info(
+        "Sigorta sistemi; müşteriler, sigorta şirketleri, aktüerler ve reasürans şirketlerinin "
+        "birbirini tamamlayan görevleri sayesinde çalışır. Risk değerlendirilir, primlerle ortak "
+        "bir fon oluşturulur ve büyük zararlar taraflar arasında paylaşılır."
+    )
+
+    if st.button("Oyunu Yeniden Başlat"):
+        reset_game()
+
+    st.markdown(
+        f"""
+        <div class="footer">
+            Eğitim amaçlı hazırlanmıştır. Senaryolar gerçek poliçe veya fiyatlama tavsiyesi değildir. · Sürüm {APP_VERSION}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.stop()
+
 role = ROLES[st.session_state.role_index]
 role_scenarios = SCENARIOS[role["name"]]
 
@@ -704,9 +763,9 @@ if st.session_state.role_index >= len(ROLES):
 
 
 st.markdown(
-    """
+    f"""
     <div class="footer">
-        Eğitim amaçlı hazırlanmıştır. Senaryolar gerçek poliçe veya fiyatlama tavsiyesi değildir.
+        Eğitim amaçlı hazırlanmıştır. Senaryolar gerçek poliçe veya fiyatlama tavsiyesi değildir. · Sürüm {APP_VERSION}
     </div>
     """,
     unsafe_allow_html=True,
